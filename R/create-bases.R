@@ -1,57 +1,47 @@
 filter_nonzero_bases <- function(bases) {
   # Filter bases functions that are essentially 0 if any
-  bases.Present <- c()
+  filted_bases <- c()
   M <- ncol(bases)
 
-  PresentBases <- c()
+  bases_indices <- c()
   for (j in 1:M) {
     fj <- bases[, j]
     if (sum(abs(fj)) > 10^-10) {
-      PresentBases <- c(PresentBases, j)
+      bases_indices <- c(bases_indices, j)
     }
   }
-  bases.Present <- bases[, PresentBases]
-  return(list(Fh.P = bases.Present, PresentBases = PresentBases))
+  filted_bases <- bases[, bases_indices]
+  return(list(Fh.P = filted_bases, PresentBases = bases_indices))
 }
 
-create_bases <- function(position, keep = NULL) {
-  # Inputs:
-  # position: time for all individuals
-  #
-  # Output: a list with:
-  # - F.Bases: Functions of the dictionary
-  # - Num.Bases.Pres: ID of the functions
-
-  # Choosing the dictionary for Lasso estimation
-
-  # Fourier (sin,cos)
-  Ff <- c()
-
-  n <- max(position)
-  Ff <- c()
-  for (i in seq(1, n, 1)) {
-    Ff <- cbind(Ff, sin(2 * pi * i * position / n), cos(2 * pi * i * position / n))
+create_bases <- function(t, keep = NULL) {
+  max_t <- max(t)
+  n_timepoints <- length(t)
+  
+  Fourier_basis <- matrix(NA, n_timepoints, 2 * max_t)
+  for (i in 1:max_t) {
+    angle <- 2 * pi * i * t / max_t
+    Fourier_basis <- cbind(Fourier_basis, sin(angle), cos(angle))
   }
 
-  # Power functions
-  x <- position / n
-  Fx <- c()
-  rg <- seq(0.1, 2, 0.02)
-  for (i in 1:length(rg)) {
-    Fx <- cbind(Fx, x^rg[i])
+  normalized_t <- t / max_t
+  poly_degrees <- seq(0.1, 2, 0.02)
+  
+  poly_basis <- matrix(NA, n_timepoints, length(poly_degrees))
+  for (i in 1:length(poly_degrees)) {
+    poly_basis <- cbind(poly_basis, normalized_t^poly_degrees[i])
   }
 
-  F.tot <- cbind(Ff, Fx)
+  bases_functions <- cbind(Fourier_basis, poly_basis)
 
   if (!is.null(keep)) {
-    F.tot <- F.tot[, keep]
+    bases_functions <- bases_functions[, keep]
   }
 
-  F.Bases <- c()
-  F.Bases.tot <- c()
-  F.Bases.tot <- filter_nonzero_bases(F.tot)
-  Num.Bases.Pres <- F.Bases.tot$PresentBases
-  F.Bases <- F.Bases.tot$Fh.P
+  filtered_bases_functions <- filter_nonzero_bases(bases_functions)
+  
+  bases_indices <- filtered_bases_functions$PresentBases
+  bases_functions_out <- filtered_bases_functions$Fh.P
 
-  return(list(F.Bases = F.Bases, Num.Bases.Pres = Num.Bases.Pres))
+  return(list(F.Bases = bases_functions_out, Num.Bases.Pres = bases_indices))
 }
