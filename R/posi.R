@@ -1,18 +1,17 @@
-debias_plmm <- function(data, plmm_output, a = 1, Z = NULL) {
-  x <- as.matrix(subset(data, select = -c(series, position, y)))
-  y <- data$y - plmm_output$Res.F$out.F$F.fit
+debias_plmm <- function(x, y, series, plmm_output, a = 1, Z = NULL) {
+  y_offset <- y - plmm_output$Res.F$out.F$F.fit
 
-  grp <- factor(data$series)
+  series <- as.factor(series)
 
-  z <- model.matrix(~ as.factor(series) - 1, data[, "series", drop = F])
+  z <- model.matrix(~ series - 1)
 
-  Sigma_a <- a * plmm_output$su * z %*% t(z) + plmm_output$se * diag(rep(1, length(y)))
+  Sigma_a <- a * plmm_output$su * z %*% t(z) + plmm_output$se * diag(rep(1, length(y_offset)))
 
   Sigma_a_svd <- svd(Sigma_a)
   Sigma_a_sqrt_inv <- Sigma_a_svd$u %*% diag(1 / sqrt(Sigma_a_svd$d)) %*% t(Sigma_a_svd$u)
 
   x_a <- Sigma_a_sqrt_inv %*% x
-  y_a <- Sigma_a_sqrt_inv %*% y
+  y_a <- Sigma_a_sqrt_inv %*% y_offset
 
   if (is.null(Z)) {
     de_sparsified <- hdi::lasso.proj(x_a, y_a,
@@ -39,10 +38,11 @@ debias_plmm <- function(data, plmm_output, a = 1, Z = NULL) {
 
     beta_debias[[j]] <- beta_original[j] + sum(score_j * res) / sum(score_j * x_a[, j])
 
-    # Group by 'grp' and summarize scaled_res
-    df_res <- dplyr::summarize(dplyr::group_by(data.frame(score_j, res, grp), grp),
-                        scaled_res = (sum(score_j * res))^2)
-    
+    # Group by 'series' and summarize scaled_res
+    df_res <- dplyr::summarize(dplyr::group_by(data.frame(score_j, res, series), series),
+      scaled_res = (sum(score_j * res))^2
+    )
+
     # Calculate scaled_rss
     scaled_rss <- sum(df_res$scaled_res)
 
