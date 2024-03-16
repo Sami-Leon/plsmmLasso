@@ -1,4 +1,4 @@
-Bases.NonNulles <- function(bases) {
+filter_nonzero_bases <- function(bases) {
   # Filter bases functions that are essentially 0 if any
   bases.Present <- c()
   M <- ncol(bases)
@@ -14,7 +14,7 @@ Bases.NonNulles <- function(bases) {
   return(list(Fh.P = bases.Present, PresentBases = PresentBases))
 }
 
-CreationBases <- function(position, keep = NULL) {
+create_bases <- function(position, keep = NULL) {
   # Inputs:
   # position: time for all individuals
   #
@@ -49,7 +49,7 @@ CreationBases <- function(position, keep = NULL) {
 
   F.Bases <- c()
   F.Bases.tot <- c()
-  F.Bases.tot <- Bases.NonNulles(F.tot)
+  F.Bases.tot <- filter_nonzero_bases(F.tot)
   Num.Bases.Pres <- F.Bases.tot$PresentBases
   F.Bases <- F.Bases.tot$Fh.P
 
