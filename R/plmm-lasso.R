@@ -1,13 +1,13 @@
-calc_criterion <- function(crit, res_output, log_lik, nonpara = FALSE) {
-  n <- res_output$X.fit
-  k <- sum(res_output$theta != 0)
-  d <- length(res_output$theta)
-  
+calc_criterion <- function(crit, lasso_output, log_lik, nonpara = FALSE) {
+  n <- lasso_output$x_fit
+  k <- sum(lasso_output$theta != 0)
+  d <- length(lasso_output$theta)
+
   if (nonpara == TRUE) {
-    k <- k + length(res_output$FunctSelect)
-    d <- length(res_output$theta) + length(as.vector(res_output$Coef.Val))
+    k <- k + length(lasso_output$selected_functions)
+    d <- length(lasso_output$theta) + length(as.vector(lasso_output$alpha))
   }
-  
+
   if (crit == "BIC") {
     return(-2 * log_lik + log(n) * k)
   }
@@ -21,146 +21,171 @@ calc_criterion <- function(crit, res_output, log_lik, nonpara = FALSE) {
 
 init_params <- function(y, series) {
   y_series_means <- tapply(y,
-                   list(series = as.factor(series)),
-                   FUN = function(x) mean(x, na.rm = TRUE)
+    list(series = as.factor(series)),
+    FUN = function(x) mean(x, na.rm = TRUE)
   )
-  
-  su <- var(c(y_series_means), na.rm = T)
-  se <- var(y, na.rm = T) - su
+
+  su <- var(c(y_series_means), na.rm = TRUE)
+  se <- var(y, na.rm = TRUE) - su
   sr <- se / su
-  invisible(list(g = sr, se = se))
+  invisible(list(sr = sr, se = se))
 }
 
-E_step <- function(x, y, series, out.F, g, ni, theta) {
-  
+E_step <- function(x, y, series, f_fit, sr, ni, theta) {
   res <- data.frame(
-      series = series,
-      resid = (y - out.F$F.fit - x %*% theta)
-    )
-
-  U2 <- tapply(res$resid,
-               list(series = as.factor(res$series)),
-               FUN = function(x) sum(x, na.rm = TRUE)
-  ) / (ni + g)
-  
-  U2 <- data.frame(
-    series = unique(Data$series),
-    U2 = c(t(U2))
+    series = series,
+    resid = (y - f_fit - x %*% theta)
   )
-  
-  invisible(U2)
+
+  phi <- tapply(res$resid,
+    list(series = as.factor(res$series)),
+    FUN = function(x) sum(x, na.rm = TRUE)
+  ) / (ni + sr)
+
+  df_phi <- data.frame(
+    series = unique(series),
+    phi = c(t(phi))
+  )
+
+  invisible(df_phi)
 }
 
-M_step_standard_error <- function(x, y, out.F, g, se, U2, ni, theta) {
+M_step_standard_error <- function(x, y, f_fit, sr, se, phi, ni, theta) {
   n <- length(y)
-  
-  repU2 <- rep(U2$U2, ni)
-  
-  se <- sum((y - out.F$F.fit - x %*% theta - repU2)^2, na.rm = TRUE) + sum((ni * se) / (ni + g))
+
+  rep_phi <- rep(phi, ni)
+
+  se <- sum((y - f_fit - x %*% theta - rep_phi)^2, na.rm = TRUE) + sum((ni * se) / (ni + sr))
   se <- se / n
-  
+
   se[is.na(se) | se == Inf] <- 0
-  
+
   return(se = se)
 }
 
-M_step_random_effects <- function(series, g, se, U2, ni) {
+M_step_random_effects <- function(series, sr, se, phi, ni) {
   N <- length(unique(series))
-  su <- sum((U2$U2)^2, na.rm = T) + sum(se / (ni + g), na.rm = TRUE)
+  su <- sum((phi)^2, na.rm = T) + sum(se / (ni + sr), na.rm = TRUE)
   su <- su / N
-  
+
   su[is.na(se) | se == Inf] <- 0
   return(su = su)
 }
 
-offset_random_effects <- function(y, U2, ni) {
-  repU2 <- rep(U2$U2, ni)
-  y <- y - repU2
+offset_random_effects <- function(y, phi, ni) {
+  rep_phi <- rep(phi, ni)
+  y <- y - rep_phi
   return(y)
 }
 
 joint_lasso <- function(x, y, t, name_group_var, bases, se, gamma,
-                      lambda, pre_D) {
-
+                        lambda, pre_D) {
   x_stand <- scale(x, scale = TRUE)
-  
+
   x_mean <- attr(x_stand, "scaled:center")
   x_sd <- attr(x_stand, "scaled:scale")
-  
+
   x <- cbind(1, x)
   x_stand <- cbind(1, x_stand)
 
   combined_x_bases <- cbind(x_stand, bases)
-  
-  p = ncol(x_stand)
+
+  p <- ncol(x_stand)
   M <- ncol(bases)
-  pM = p + M 
-  
+  pM <- p + M
+
   D <- diag(1, nrow = pM, ncol = pM)
-  
-  D[(p + 1):pM, (p + 1):pM] <- pre_D * (sqrt(se * gamma * log(M/2)) / lambda)
-  
+
+  D[(p + 1):pM, (p + 1):pM] <- pre_D * (sqrt(se * gamma * log(M / 2)) / lambda)
+
   D_inv <- D
   diag(D_inv) <- 1 / diag(D_inv)
-  
+
   combined_x_bases_lasso <- combined_x_bases %*% D_inv
-  
+
   y_stand <- scale(y)
   y_mean <- attr(y_stand, "scaled:center")
   y_sd <- attr(y_stand, "scaled:scale")
-  
-  coef_joint_lasso <- as.vector(coef(glmnet::glmnet(combined_x_bases_lasso[, -1],
-                                                   y_stand,
-                                                   alpha = 1, lambda = lambda,
-                                                   standardize = FALSE,
-                                                   intercept = TRUE
-    )))
 
-  
+  coef_joint_lasso <- as.vector(coef(glmnet::glmnet(combined_x_bases_lasso[, -1],
+    y_stand,
+    alpha = 1, lambda = lambda,
+    standardize = FALSE,
+    intercept = TRUE
+  )))
+
+
   coef_joint_lasso[1] <- (coef_joint_lasso[1] - sum((x_mean / x_sd) * coef_joint_lasso[2:p])) * y_sd + y_mean
-  
+
   coef_joint_lasso <- D_inv %*% coef_joint_lasso
   coef_joint_lasso[-1] <- coef_joint_lasso[-1] * y_sd
   coef_joint_lasso[2:p, 1] <- coef_joint_lasso[2:p, 1] / x_sd
-  
+
   theta <- coef_joint_lasso[1:p, 1]
   names(theta) <- colnames(x)
   names(theta)[1] <- "Intercept"
-  
+
   alpha <- coef_joint_lasso[(p + 1):nrow(coef_joint_lasso), 1]
-  
-  # theta[-1][abs(theta)[-1] < 0.01] <- 0
-  
-  f_hat <- bases %*% alpha
-  
-  out.F <- data.frame(
-    position = t,
-    F.fit = f_hat,
-    Group = x[, name_group_var]
+
+  f_fit <- bases %*% alpha
+
+  out_f <- data.frame(
+    t = t,
+    f_fit = f_fit,
+    group = x[, name_group_var]
   )
-  
+
   x_fit <- x %*% theta
-  
+
   selected_functions <- which(alpha != 0)
-  
+
   invisible(list(
-    out.F = out.F, FunctSelect = selected_functions, Coef.Val = alpha,
-    theta = theta, X.fit = x_fit
+    out_f = out_f, selected_functions = selected_functions, alpha = alpha,
+    theta = theta, x_fit = x_fit
   ))
 }
 
-plmm_lasso <- function(x, y, series, t, name_group_var, bases, 
-                       gamma, lambda, timexgroup, tol.EM = 0.001) {
+plmm_lasso <- function(x, y, series, t, name_group_var, bases,
+                       gamma, lambda, timexgroup, criterion, cvg_crit = 0.001, 
+                       max_iter = 100) {
   
-  # Data <- as.data.frame(cbind(y, series, position, X))
-  p = ncol(x)
+  # Check if x is a matrix
+  if (!is.matrix(x)) {
+    stop("Argument 'x' must be a matrix.")
+  }
+  
+  # Check if y is a numerical vector
+  if (!is.numeric(y)) {
+    stop("Argument 'y' must be a numerical vector.")
+  }
+  
+  # Check if t is a numerical vector
+  if (!is.numeric(t)) {
+    stop("Argument 't' must be a numerical vector.")
+  }
+  
+  # Check if name_group_var is a character
+  if (!is.character(name_group_var)) {
+    stop("Argument 'name_group_var' must be a character.")
+  }
+  
+  # Check if x[, name_group_var] is a 0,1 binary vector
+  if (any(x[, name_group_var] != 0 & x[, name_group_var] != 1)) {
+    stop("The column specified by 'name_group_var' in 'x' must be a 0,1 binary vector.")
+  }
+  
+  # Check if bases is a matrix
+  if (!is.matrix(bases)) {
+    stop("Argument 'bases' must be a matrix.")
+  }
+  
   ni <- as.vector(table(series))
 
   if (timexgroup) {
-    n = length(y)
-    vec_group =  x[,name_group_var]
-    ref_group = vec_group[1]
-    ncol(bases) = M
+    n <- length(y)
+    vec_group <- x[, name_group_var]
+    ref_group <- vec_group[1]
+    M <- ncol(bases)
     bases_timexgroup <- matrix(nrow = n, ncol = M * 2)
     for (i in 1:n) {
       if (vec_group[i] == ref_group) {
@@ -169,174 +194,141 @@ plmm_lasso <- function(x, y, series, t, name_group_var, bases,
         bases_timexgroup[i, ] <- c(rep(0, M), bases[i, ])
       }
     }
+    bases <- bases_timexgroup
   }
-  
-  bases = bases_timexgroup
 
-  
   pre_D <- diag(sqrt(apply(bases^2, 2, sum)))
-  
+
   ## Initialization
-  out.si <- init_params(y = y, series = series)
-  g <- out.si[[1]]
-  se <- out.si[[2]]
-  
-  theta <- rep(0, p + 1)
-  
-  init.EstiF <- joint_lasso(x = x, y = y, t = t, name_group_var = name_group_var, 
-                            bases = bases, se = se, gamma = gamma,lambda = lambda,
-                            pre_D = pre_D)
-  
-  out.F <- init.EstiF$out.F
-  theta <- init.EstiF$theta
-  
-  
-  max_iter <- 50
+  out_init <- init_params(y = y, series = series)
+  sr <- out_init[[1]]
+  se <- out_init[[2]]
+
+  theta <- rep(0, ncol(x) + 1)
+
+  lasso_init <- joint_lasso(
+    x = x, y = y, t = t, name_group_var = name_group_var,
+    bases = bases, se = se, gamma = gamma, lambda = lambda,
+    pre_D = pre_D
+  )
+
+  out_f <- lasso_init$out_f
+  theta <- lasso_init$theta
+
+  max_iter <- max_iter
   cvg_crit <- Inf
   Iter <- 0
-  
-  while ((cvg_crit > tol.EM) & (Iter < max_iter)) {
+
+  while ((cvg_crit > cvg_crit) & (Iter < max_iter)) {
     Iter <- Iter + 1
     
-    out.E <- E_step(x = x, y = y, series = series, out.F = out.F, g = g, ni = ni,
-                    theta = theta)
-    U2 <- out.E
+    f_fit = out_f$f_fit
+
+    out_E <- E_step(
+      x = x, y = y, series = series, f_fit = f_fit, sr = sr, ni = ni,
+      theta = theta
+    )
     # here
-    se.tmp <- M_step_standard_error(x = x, y = y, out.F = out.F, g = g, se = se,
-                                    U2 = U2, ni = ni, theta = theta)
+    phi_tmp <- out_E$phi
+    se_tmp <- M_step_standard_error(
+      x = x, y = y, f_fit = f_fit, sr = sr, se = se,
+      phi = phi_tmp, ni = ni, theta = theta
+    )
+
+    su_tmp <- M_step_random_effects(
+      series = series, sr = sr, se = se, phi = phi_tmp,
+      ni = ni
+    )
+
+    sr_tmp <- se_tmp / su_tmp
+    # sr_tmp[is.nan(sr_tmp)] <- 0
+    # su_tmp[is.nan(su_tmp)] <- 0
+
+    y_offset <- offset_random_effects(y = y, phi = phi_tmp, ni = ni)
+
+    lasso_output <- joint_lasso(
+      x = x, y = y_offset, t = t, name_group_var = name_group_var,
+      bases = bases, se = se, gamma = gamma, lambda = lambda,
+      pre_D = pre_D
+    )
+
+    out_f_tmp <- lasso_output$out_f
+    theta_tmp <- lasso_output$theta
     
-    su.tmp <- M_step_random_effects(series = series, g = g, se = se, U2 = U2, 
-                                    ni = ni)
     
-    g.tmp <- se.tmp / su.tmp
-    # g.tmp[is.nan(g.tmp)] <- 0
-    # su.tmp[is.nan(su.tmp)] <- 0
-    
-    # F estimation
-    y_offset <- offset_random_effects(y = y, U2 = U2, ni = ni)
-    
-    Res.F <- joint_lasso(x = x, y = y_offset, t = t, name_group_var = name_group_var,
-                         bases = bases, se = se, gamma = gamma, lambda = lambda, 
-                         pre_D = pre_D)
-    
-    
-    out.F.tmp <- Res.F$out.F
-    
-    theta.tmp <- Res.F$theta
-    
+
     delta_f <- 0
     delta_theta <- 0
     delta_se <- 0
     delta_su <- 0
-    
+
     if (Iter == 2) {
-      t2 <- c(out.F$F.fit, se, se / g, theta)
+      t2 <- c(out_f$f_fit, se, se / sr, theta)
     }
     if (Iter == 3) {
-      t1 <- c(out.F$F.fit, se, se / g, theta)
-      t0 <- c(out.F.tmp$F.fit, se.tmp, se.tmp / g.tmp, theta.tmp)
+      t1 <- c(out_f$f_fit, se, se / sr, theta)
+      t0 <- c(out_f_tmp$f_fit, se_tmp, se_tmp / sr_tmp, theta_tmp)
       tp0 <- (t2 - t1) / sum(((t2 - t1)^2)) + (t0 - t1) / sum(((t0 - t1)^2))
       tp0 <- t1 + tp0 / sum(tp0^2)
     }
     if (Iter > 3) {
       t2 <- t1
       t1 <- t0
-      t0 <- c(out.F.tmp$F.fit, se.tmp, se.tmp / g.tmp, theta.tmp)
+      t0 <- c(out_f_tmp$f_fit, se_tmp, se_tmp / sr_tmp, theta_tmp)
       tp1 <- tp0
       tp0 <- (t2 - t1) / sum(((t2 - t1)^2)) + (t0 - t1) / sum(((t0 - t1)^2))
       tp0 <- t1 + tp0 / sum(tp0^2)
       cvg_crit <- sum((tp0 - tp1)^2)
-      
-      delta_f <- sum((out.F$F.fit - out.F.tmp$F.fit)^2)
-      delta_theta <- sum((theta - theta.tmp)^2)
-      delta_se <- sum((se - se.tmp)^2)
-      delta_su <- sum((se / g - se.tmp / g.tmp)^2)
+
+      delta_f <- sum((out_f$f_fit - out_f_tmp$f_fit)^2)
+      delta_theta <- sum((theta - theta_tmp)^2)
+      delta_se <- sum((se - se_tmp)^2)
+      delta_su <- sum((se / sr - se_tmp / sr_tmp)^2)
     }
-    
-    if ((cvg_crit > 3) & (Iter > 3)) {
-      Iter <- Iter + (50 - Iter)
-    }
-    
+
     # Update
-    se <- se.tmp
-    su <- su.tmp
-    out.F <- out.F.tmp
-    g <- g.tmp
-    theta <- theta.tmp
-    
-    mean.0.tmp <- attr(scale(unique(out.F[out.F$Group == 0, ]$F.fit),
-                             scale = F
-    ), "scaled:center")
-    mean.1.tmp <- attr(scale(unique(out.F[out.F$Group == 1, ]$F.fit),
-                             scale = F
-    ), "scaled:center")
-    
-    out.F.tmp <- out.F
-    
-    out.F.tmp[out.F.tmp$Group == 0, ]$F.fit <- out.F.tmp[out.F.tmp$Group == 0, ]$F.fit - mean.0.tmp
-    out.F.tmp[out.F.tmp$Group == 1, ]$F.fit <- out.F.tmp[out.F.tmp$Group == 1, ]$F.fit - mean.1.tmp
-    
-    theta.tmp <- theta
-    
-    theta.tmp[2] <- theta.tmp[2] + (mean.1.tmp - mean.0.tmp)
-    theta.tmp[1] <- theta.tmp[1] + mean.0.tmp
+    se <- se_tmp
+    su <- su_tmp
+    out_f <- out_f_tmp
+    sr <- sr_tmp
+    theta <- theta_tmp
     
     cat("Iter ", Iter, cvg_crit, delta_f, delta_theta, delta_se, delta_su, "\n")
   }
+
+  group_0 = lasso_output$out_f$group == 0
   
-  mean.0 <- attr(scale(unique(Res.F$out.F[Res.F$out.F$Group == 0, ]$F.fit),
-                       scale = F
+  f0_mean <- attr(scale(unique(lasso_output$out_f[group_0, ]$f_fit),
+    scale = FALSE
   ), "scaled:center")
-  mean.1 <- attr(scale(unique(Res.F$out.F[Res.F$out.F$Group == 1, ]$F.fit),
-                       scale = F
+  f1_mean <- attr(scale(unique(lasso_output$out_f[!group_0, ]$f_fit),
+    scale = FALSE
   ), "scaled:center")
-  
-  Res.F$out.F[Res.F$out.F$Group == 0, ]$F.fit <- Res.F$out.F[Res.F$out.F$Group == 0, ]$F.fit - mean.0
-  Res.F$out.F[Res.F$out.F$Group == 1, ]$F.fit <- Res.F$out.F[Res.F$out.F$Group == 1, ]$F.fit - mean.1
-  
-  Res.F$theta["Group"] <- Res.F$theta["Group"] + (mean.1 - mean.0)
-  Res.F$theta["Intercept"] <- Res.F$theta["Intercept"] + mean.0
-  Res.F$X.fit <- as.matrix(cbind(1, X)) %*% Res.F$theta
-  
-  hyper.parameters <- data.frame(lambda.grid = lambda.grid, gam.cste = gam.cste)
-  converged <- ifelse(Iter >= max_iter, F, T)
-  
-  Z <- model.matrix(~ 0 + factor(series), Data)
+
+  lasso_output$out_f[group_0, ]$f_fit <- lasso_output$out_f[group_0, ]$f_fit - f0_mean
+  lasso_output$out_f[!group_0, ]$f_fit <- lasso_output$out_f[!group_0, ]$f_fit - f1_mean
+
+  lasso_output$theta[name_group_var] <- lasso_output$theta[name_group_var] + (f1_mean - f0_mean)
+  lasso_output$theta["Intercept"] <- lasso_output$theta["Intercept"] + f0_mean
+  lasso_output$x_fit <- as.matrix(cbind(1, X)) %*% lasso_output$theta
+
+  hyperparameters <- data.frame(lambda = lambda, gamma = gamma)
+  converged <- ifelse(Iter >= max_iter, FALSE, TRUE)
+
+  Z <- model.matrix(~ 0 + factor(series))
   logLik <- mvtnorm::dmvnorm(
     x = y,
-    mean = as.vector(Res.F$X.fit) + Res.F$out.F$F.fit,
-    sigma = diag(nrow(Z)) * se + su * Z %*% t(Z), log = T
+    mean = as.vector(lasso_output$x_fit) + lasso_output$out_f$f_fit,
+    sigma = diag(nrow(Z)) * se + su * Z %*% t(Z), log = TRUE
   )
-  
-  BIC <- calc_criterion(
-    name = "BIC", out.EM = Res.F, data = Data,
-    logLik = logLik, nonpara = F
+
+  ic <- calc_criterion(
+    crit = criterion, lasso_output = lasso_output,
+    log_lik = logLik, nonpara = FALSE
   )
-  BIC.nonpara <- calc_criterion(
-    name = "BIC", out.EM = Res.F, data = Data,
-    logLik = logLik, nonpara = T
-  )
-  BICC <- calc_criterion(
-    name = "BICC", out.EM = Res.F, data = Data,
-    logLik = logLik, nonpara = F
-  )
-  BICC.nonpara <- calc_criterion(
-    name = "BICC", out.EM = Res.F, data = Data,
-    logLik = logLik, nonpara = T
-  )
-  EBIC <- calc_criterion(
-    name = "EBIC", out.EM = Res.F, data = Data, logLik =
-      logLik, nonpara = F
-  )
-  EBIC.nonpara <- calc_criterion(
-    name = "EBIC", out.EM = Res.F, data = Data,
-    logLik = logLik, nonpara = T
-  )
-  
+
   return(list(
-    Res.F = Res.F, se = se, su = su, U2 = U2, ni = ni,
-    hyper.parameters = hyper.parameters, converged = converged, BIC = BIC,
-    BIC.nonpara = BIC.nonpara, BICC = BICC, BICC.nonpara = BICC.nonpara,
-    EBIC = EBIC, EBIC.nonpara = EBIC.nonpara
+    lasso_output = lasso_output, se = se, su = su, U2 = out_E, ni = ni,
+    hyperparameters = hyperparameters, converged = converged, crit = ic
   ))
 }

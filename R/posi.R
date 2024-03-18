@@ -1,5 +1,5 @@
 debias_plmm <- function(x, y, series, plmm_output, a = 1, Z = NULL) {
-  y_offset <- y - plmm_output$Res.F$out.F$F.fit
+  y_offset <- y - plmm_output$lasso_output$out_f$f_fit
 
   series <- as.factor(series)
 
@@ -23,8 +23,8 @@ debias_plmm <- function(x, y, series, plmm_output, a = 1, Z = NULL) {
   } else {
     debias_score_matrix <- Z
   }
-
-  beta_original <- plmm_output$Res.F$theta[-1] # removing intercept
+  # removing intercept
+  beta_original <- plmm_output$lasso_output$theta[-1] 
 
   res <- y_a - x_a %*% beta_original
 
