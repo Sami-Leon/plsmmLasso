@@ -7,7 +7,6 @@ tune_plmm <- function(x, y, series, t, name_group_var, bases,
     lambda_i <- grid_hyper[i, ][[1]]
     gamma_i <- grid_hyper[i, ][[2]]
 
-
     plmm_models[[i]] <- plmm_lasso(
       x = x, y = y, series = series, t = t,
       name_group_var = name_group_var, bases = bases,
@@ -16,12 +15,9 @@ tune_plmm <- function(x, y, series, t, name_group_var, bases,
     )
   }
 
-  plmm_models <- plmm_models[unlist(lapply(
-    plmm_models,
-    function(x) x$converged
-  ))]
-  
-  best_plmm <- which.min(unlist(lapply(plmm_models, function(x) x$crit)))
+  plmm_models <- plmm_models[sapply(plmm_models, function(x) x$converged)]
+
+  best_plmm <- which.min(sapply(plmm_models, function(x) x$crit))
 
   return(plmm_models[[best_plmm]])
 }
