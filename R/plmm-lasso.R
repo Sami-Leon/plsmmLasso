@@ -1,5 +1,5 @@
 calc_criterion <- function(crit, lasso_output, log_lik, nonpara = FALSE) {
-  n <- lasso_output$x_fit
+  n <- nrow(lasso_output$x_fit)
   k <- sum(lasso_output$theta != 0)
   d <- length(lasso_output$theta)
 
@@ -32,6 +32,7 @@ init_params <- function(y, series) {
 }
 
 E_step <- function(x, y, series, f_fit, sr, ni, theta) {
+  x = cbind(1, x)
   res <- data.frame(
     series = series,
     resid = (y - f_fit - x %*% theta)
@@ -51,6 +52,7 @@ E_step <- function(x, y, series, f_fit, sr, ni, theta) {
 }
 
 M_step_standard_error <- function(x, y, f_fit, sr, se, phi, ni, theta) {
+  x = cbind(1, x)
   n <- length(y)
 
   rep_phi <- rep(phi, ni)
@@ -106,7 +108,9 @@ joint_lasso <- function(x, y, t, name_group_var, bases, se, gamma,
   y_stand <- scale(y)
   y_mean <- attr(y_stand, "scaled:center")
   y_sd <- attr(y_stand, "scaled:scale")
+  
 
+  
   coef_joint_lasso <- as.vector(coef(glmnet::glmnet(combined_x_bases_lasso[, -1],
     y_stand,
     alpha = 1, lambda = lambda,
@@ -146,7 +150,7 @@ joint_lasso <- function(x, y, t, name_group_var, bases, se, gamma,
 }
 
 plmm_lasso <- function(x, y, series, t, name_group_var, bases,
-                       gamma, lambda, timexgroup, criterion, cvg_crit = 0.001, 
+                       gamma, lambda, timexgroup, criterion, cvg_tol = 0.001, 
                        max_iter = 100) {
   
   # Check if x is a matrix
@@ -201,8 +205,8 @@ plmm_lasso <- function(x, y, series, t, name_group_var, bases,
 
   ## Initialization
   out_init <- init_params(y = y, series = series)
-  sr <- out_init[[1]]
-  se <- out_init[[2]]
+  sr <- out_init$sr
+  se <- out_init$se
 
   theta <- rep(0, ncol(x) + 1)
 
@@ -218,8 +222,7 @@ plmm_lasso <- function(x, y, series, t, name_group_var, bases,
   max_iter <- max_iter
   cvg_crit <- Inf
   Iter <- 0
-
-  while ((cvg_crit > cvg_crit) & (Iter < max_iter)) {
+  while ((cvg_crit > cvg_tol) & (Iter < max_iter)) {
     Iter <- Iter + 1
     
     f_fit = out_f$f_fit
@@ -310,7 +313,7 @@ plmm_lasso <- function(x, y, series, t, name_group_var, bases,
 
   lasso_output$theta[name_group_var] <- lasso_output$theta[name_group_var] + (f1_mean - f0_mean)
   lasso_output$theta["Intercept"] <- lasso_output$theta["Intercept"] + f0_mean
-  lasso_output$x_fit <- as.matrix(cbind(1, X)) %*% lasso_output$theta
+  lasso_output$x_fit <- as.matrix(cbind(1, x)) %*% lasso_output$theta
 
   hyperparameters <- data.frame(lambda = lambda, gamma = gamma)
   converged <- ifelse(Iter >= max_iter, FALSE, TRUE)
@@ -328,7 +331,7 @@ plmm_lasso <- function(x, y, series, t, name_group_var, bases,
   )
 
   return(list(
-    lasso_output = lasso_output, se = se, su = su, U2 = out_E, ni = ni,
+    lasso_output = lasso_output, se = se, su = su, out_phi = out_E, ni = ni,
     hyperparameters = hyperparameters, converged = converged, crit = ic
   ))
 }

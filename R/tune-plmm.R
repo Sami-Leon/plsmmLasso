@@ -20,8 +20,8 @@ tune_plmm <- function(x, y, series, t, name_group_var, bases,
     plmm_models,
     function(x) x$converged
   ))]
-
-  best_plmm <- which.min(unlist(lapply(plmm_models, function(x) x[criterion])))
+  
+  best_plmm <- which.min(unlist(lapply(plmm_models, function(x) x$crit)))
 
   return(plmm_models[[best_plmm]])
 }
