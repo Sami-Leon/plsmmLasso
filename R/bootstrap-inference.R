@@ -76,7 +76,7 @@ calc_f_diff <- function(out_f) {
 
 test_overall_f <- function(list_fitted_boot, plmm_output) {
   df_list_fit <- lapply(seq_along(list_fitted_boot), function(i) {
-    df <- list_fitted_boot[[i]]$out.F
+    df <- list_fitted_boot[[i]]$out_f
     df$boot <- as.character(i) 
     return(df)
   })
@@ -151,20 +151,20 @@ create_CI <- function(list_diff_CI, data, min_lambda) {
   
   obs = calc_f_diff(pred_f(fit_boot(data, min_lambda), data, byseq = 0.1))
   
-  CI_diff_f <- data.frame(obs, CIlow[, 2], CIup[, 2])
-  colnames(CI_diff_f) <- c("t", "Group diff.", "Lower 95%", "Upper 95%")
+  CI_diff_f <- data.frame(obs, CI_low[, 2], CI_up[, 2])
+  colnames(CI_diff_f) <- c("t", "f diff.", "Lower 95%", "Upper 95%")
   rownames(CI_diff_f) <- NULL
   
   return(CI_diff_f)
 }
 
-f.test <- function(x, y, series, t,  name_group_var = "group", plmm_output, n_boot = 1000) {
+test_f <- function(x, y, series, t,  name_group_var, plmm_output, n_boot = 1000) {
   y <- y - plmm_output$lasso_output$x_fit - rep(plmm_output$out_phi$phi, plmm_output$ni)
 
   t_obs <- sort(unique(t))
   
   data <- data.frame(y, series, t, x[,name_group_var])
-  colnames(data)[4] = name_group_var
+  colnames(data)[4] = "group"
   
   samples <- sample_boot(data = data, n_boot = n_boot)
   
@@ -193,11 +193,11 @@ f.test <- function(x, y, series, t,  name_group_var = "group", plmm_output, n_bo
   diff_predicted_f <- lapply(predicted_f, calc_f_diff)
   CI_f <- create_CI(diff_predicted_f, data, min_lambda)
   
-  plot_CI <- ggplot(CI_f, aes(x = t, y = `Group diff.`)) +
+  plot_CI <- ggplot(CI_f, aes(x = t, y = `f diff.`)) +
     geom_line() +
     geom_hline(yintercept = 0, linetype = "dashed") +
-    geom_line(aes(Month, `CI lower`), data = CI_f, col = "blue") +
-    geom_line(aes(Month, `CI upper`), data = CI_f, col = "blue") +
+    geom_line(aes(t, `Lower 95%`), data = CI_f, col = "blue") +
+    geom_line(aes(t, `Upper 95%`), data = CI_f, col = "blue") +
     scale_x_continuous(breaks = t_obs)
   
   return(list(overall_test_results = overall_test_results, CI_f = CI_f,
