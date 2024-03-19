@@ -1,9 +1,9 @@
 sample_boot <- function(data, n_boot) {
-  unique_patients <- unique(data$series)
+  unique_series <- unique(data$series)
   n_series <- length(unique_series)
 
   bootstrap_samples <- lapply(1:n_boot, function(x) {
-    sample_id <- sample(unique_patients, n_series, replace = TRUE)
+    sample_id <- sample(unique_series, n_series, replace = TRUE)
     mat_boot <- do.call(rbind, lapply(sample_id, function(j) data[data$series == j, ]))
     return(mat_boot)
   })

@@ -36,27 +36,31 @@ tuned_plmm <- tune_plmm(x, y, series, t, name_group_var = "group", bases$bases,
   gamma_vec = gammas, lambda_vec = lambdas, timexgroup = TRUE,
   criterion = "BIC")
 
-tuned_plmm$hyperparameters
-tuned_plmm$lasso_output$theta
+head(tuned_plmm$lasso_output$theta)
+
 
 # Visualize overall fit and nonlinear functions 
 plot_fit(x, y, series, t,  name_group_var = "group", 
   plmm_output, predicted = FALSE)
 
+plot_fit(x, y, series, t,  name_group_var = "group", 
+         plmm_output, predicted = TRUE)
+
 # Get debiased fixed-effects and pvalues
 posi = debias_plmm(x, y, series, tuned_plmm, a = 1, Z = NULL)
-posi
-
+head(posi)
 
 # Inference for the nonlinear functions
 test_nonlinear_functions = test_f(x, y, series, t,  name_group_var = "group",
-                                  tuned_plmm, n_boot = 10, predicted = F)
+                                  tuned_plmm, n_boot = 10, predicted = FALSE)
 
-# Test of equality of the functions H0: f1 = f2
 test_nonlinear_functions[[1]]
-
 head(test_nonlinear_functions[[2]])
-
-# Continuous joint confidence bands for the difference between f1 and f2
 test_nonlinear_functions[[3]]
 
+test_nonlinear_functions = test_f(x, y, series, t,  name_group_var = "group",
+                                  tuned_plmm, n_boot = 10, predicted = TRUE)
+
+test_nonlinear_functions[[1]]
+head(test_nonlinear_functions[[2]])
+test_nonlinear_functions[[3]]
