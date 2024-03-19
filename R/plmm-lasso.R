@@ -190,14 +190,16 @@ plmm_lasso <- function(x, y, series, t, name_group_var, bases,
     vec_group <- x[, name_group_var]
     ref_group <- vec_group[1]
     M <- ncol(bases)
-    bases_timexgroup <- matrix(nrow = n, ncol = M * 2)
-    for (i in 1:n) {
-      if (vec_group[i] == ref_group) {
-        bases_timexgroup[i, ] <- c(bases[i, ], rep(0, M))
-      } else {
-        bases_timexgroup[i, ] <- c(rep(0, M), bases[i, ])
-      }
-    }
+    
+    index_ref_group <- vec_group == ref_group
+
+    bases_timexgroup <- matrix(0, nrow = n, ncol = M * 2)
+    
+    bases_timexgroup[index_ref_group, 1:M] <- bases[index_ref_group, ]
+    bases_timexgroup[!index_ref_group, (M+1):(2*M)] <- bases[!index_ref_group, ]
+    
+    bases <- bases_timexgroup
+    
     bases <- bases_timexgroup
   }
 
