@@ -2,7 +2,7 @@
 set.seed(12)
 data.sim = simulate_group_inter(N = 50, n_mvnorm = 3, grouped = TRUE,
                                 timepoints = 3:5, nonpara_inter = TRUE,
-                                sample_from = seq(0,52,13), cst_ni = FALSE, 
+                                sample_from = seq(0,52,13), cst_ni = FALSE,
                                 cos = FALSE, A_vec = c(1, 1.5))
 
 sim1 = data.sim$sim
@@ -10,7 +10,7 @@ sim1 = data.sim$sim
 # lambdas <- round(exp(seq(log(0.1), log(1 * 0.0001),
 #                              length.out = 10
 # )), digits = 4)
-# 
+#
 # gammas <- c(
 #   0.000001, 0.0000001, 0.00000001, 0.000000001
 # )
@@ -39,12 +39,12 @@ tuned_plmm <- tune_plmm(x, y, series, t, name_group_var = "group", bases$bases,
 head(tuned_plmm$lasso_output$theta)
 
 
-# Visualize overall fit and nonlinear functions 
-plot_fit(x, y, series, t,  name_group_var = "group", 
-  plmm_output, predicted = FALSE)
+# Visualize overall fit and nonlinear functions
+plot_fit(x, y, series, t,  name_group_var = "group",
+         tuned_plmm, predicted = FALSE)
 
-plot_fit(x, y, series, t,  name_group_var = "group", 
-         plmm_output, predicted = TRUE)
+plot_fit(x, y, series, t,  name_group_var = "group",
+         tuned_plmm, predicted = TRUE)
 
 # Get debiased fixed-effects and pvalues
 posi = debias_plmm(x, y, series, tuned_plmm, a = 1, Z = NULL)
