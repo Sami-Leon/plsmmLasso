@@ -2,7 +2,7 @@
 % Please edit documentation in R/create-bases.R
 \name{filter_nonzero_bases}
 \alias{filter_nonzero_bases}
-\title{Filter bases functions.}
+\title{Filter bases functions}
 \usage{
 filter_nonzero_bases(bases)
 }
@@ -16,7 +16,7 @@ A list with the following components:
 }
 \description{
 The \code{filter_nonzero_bases} function filters out bases functions that are essentially zero.
-Bases functions with a sum of absolute values less than a threshold (default: \(10^{-10}\)) are considered as essentially zero and are filtered out.
+Bases functions with a sum of absolute values less than a threshold (\eqn{10^{-10}}) are considered as essentially zero and are filtered out.
 }
 \examples{
 bases <- matrix(c(0, 0.1, 0.2, 0, 0, 0.3, 0, 0, 0), nrow = 3)

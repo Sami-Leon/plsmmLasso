@@ -75,7 +75,7 @@ simulate_group_inter <- function(N = 50, n_mvnorm = 100, grouped = TRUE,
   
   sim <- cbind(sim, x)
   
-  colnames(sim) <- c("series", "position", "y", "group", paste0("x", 1:(ncol(x) + 1)))
+  colnames(sim) <- c("series", "t", "y", "group", paste0("x", 1:(ncol(x) + 1)))
   
   sim[, "x2"] <- sim[, "group"] * sim[, "x1"]
   sim[, "y"] <- sim[, "y"] + sim[, c("group", "x1", "x2"), drop = F] %*% theta
@@ -84,11 +84,11 @@ simulate_group_inter <- function(N = 50, n_mvnorm = 100, grouped = TRUE,
   
   phi <- rep(phi, table(sim$series))
   
-  sim <- sim[order(sim$series, sim$position), ]
+  sim <- sim[order(sim$series, sim$t), ]
   
-  f_val <- f_val[order(sim$series, sim$position)]
+  f_val <- f_val[order(sim$series, sim$t)]
   
-  phi <- phi[order(sim$series, sim$position)]
+  phi <- phi[order(sim$series, sim$t)]
   
   return(list(sim = sim, phi = phi, f_val = f_val))
 }

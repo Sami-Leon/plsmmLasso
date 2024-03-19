@@ -60,7 +60,7 @@ create_bases <- function(t, keep = NULL) {
 #' Filter bases functions
 #' 
 #' The \code{filter_nonzero_bases} function filters out bases functions that are essentially zero. 
-#' Bases functions with a sum of absolute values less than a threshold (default: \(10^{-10}\)) are considered as essentially zero and are filtered out.
+#' Bases functions with a sum of absolute values less than a threshold (\eqn{10^{-10}}) are considered as essentially zero and are filtered out.
 #' @param bases A matrix containing the bases functions.
 #' 
 #' @return A list with the following components:

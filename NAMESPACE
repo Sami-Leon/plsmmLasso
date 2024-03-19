@@ -2,3 +2,4 @@
 
 export(create_bases)
 export(filter_nonzero_bases)
+export(plmm_lasso)

@@ -149,6 +149,59 @@ joint_lasso <- function(x, y, t, name_group_var, bases, se, gamma,
   ))
 }
 
+#' Fit a high-dimensional PLMM with lasso penalty
+#'
+#' Fits a partial linear mixed effects model (PLMM) with a lasso penalty on the fixed effects 
+#' and the coefficient associated with the bases functions via penalized maximum likelihood 
+#' using the Expectation-Maximization (EM) algorithm. The bases functions represent a nonlinear effect of time.
+#' 
+#' @param x A matrix of covariates.
+#' @param y A continuous response variable.
+#' @param series A vector representing the random intercept.
+#' @param t A numerical vector representing the time variable.
+#' @param name_group_var The name of the grouping variable in the \code{x} matrix.
+#' @param bases A matrix of bases functions.
+#' @param gamma The regularization parameter for the nonlinear effect of time
+#' @param lambda The regularization parameter for the fixed effects.
+#' @param timexgroup Logical indicating whether to use a time-by-group interaction. 
+#'                   If \code{TRUE}, each group in \code{name_group_var} will have its own estimate of the time effect.
+#' @param criterion The information criterion to be used for model selection. Options are "BIC", "BICC", or "EBIC".
+#' @param cvg_tol Convergence tolerance for the algorithm.
+#' @param max_iter Maximum number of iterations allowed for convergence.
+#' 
+#' @return A list containing the following components:
+#' \describe{
+#'   \item{lasso_output}{A list with the fitted values for the fixed effect and nonlinear effect. The estimated coeffcients for the fixed effects and nonlinear effect. The indices of the used bases functions.}
+#'   \item{se}{Estimated standard deviation of the residuals.}
+#'   \item{su}{Estimated standard deviation of the random intercept.}
+#'   \item{out_phi}{Data frame containing the estimated individual random intercept.}
+#'   \item{ni}{Number of timepoitns per observations.}
+#'   \item{hyperparameters}{Data frame with lambda and gamma values.}
+#'   \item{converged}{Logical indicating if the algorithm converged.}
+#'   \item{crit}{Value of the selected information criterion.}
+#' }
+#' @examples
+#' \dontrun{
+#' # Generate example data
+#' set.seed(123)
+#' data_sim = simulate_group_inter(N = 50, n_mvnorm = 3, grouped = TRUE,
+#'                                 timepoints = 3:5, nonpara_inter = TRUE,
+#'                                 sample_from = seq(0,52,13), cst_ni = FALSE,
+#'                                 cos = FALSE, A_vec = c(1, 1.5))
+#' sim = data.sim$sim
+#' x = as.matrix(sim[,-1:-3])
+#' y = sim$y
+#' series = sim$series
+#' t = sim$t
+#' bases = create_bases(t)
+#' lambda <- 0.0046
+#' gamma <- 0.00000001
+#' plmm_lasso(x, y, series, t, name_group_var = "group", bases$bases,
+#' gamma = gamma, lambda = lambda, timexgroup = TRUE,
+#'                        criterion = "BIC")
+#' }
+#' 
+#' @export
 plmm_lasso <- function(x, y, series, t, name_group_var, bases,
                        gamma, lambda, timexgroup, criterion, cvg_tol = 0.001, 
                        max_iter = 100) {
@@ -171,6 +224,11 @@ plmm_lasso <- function(x, y, series, t, name_group_var, bases,
   # Check if name_group_var is a character
   if (!is.character(name_group_var)) {
     stop("Argument 'name_group_var' must be a character.")
+  }
+  
+  # Check if name_group_var is present in column names of x
+  if (!(name_group_var %in% colnames(x))) {
+    stop("The variable specified in 'name_group_var' is not present as a column name in 'x'.")
   }
   
   # Check if x[, name_group_var] is a 0,1 binary vector
@@ -246,9 +304,6 @@ plmm_lasso <- function(x, y, series, t, name_group_var, bases,
     )
 
     sr_tmp <- se_tmp / su_tmp
-    # sr_tmp[is.nan(sr_tmp)] <- 0
-    # su_tmp[is.nan(su_tmp)] <- 0
-
     y_offset <- offset_random_effects(y = y, phi = phi_tmp, ni = ni)
 
     lasso_output <- joint_lasso(
