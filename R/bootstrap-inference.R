@@ -1,44 +1,45 @@
-Boot_samples <- function(Data, n = 1000) {
-  unique_patients <- unique(Data$series)
+boot_samples <- function(data, n_boot) {
+  unique_patients <- unique(data$series)
+  n_series <- length(unique_series)
   
-  n_bootstrap_samples <- n # number of bootstrap samples
-  
-  bootstrap_samples <- list()
-  
-  for (i in 1:n_bootstrap_samples) {
-    sample.id <- sample(unique_patients, length(unique_patients), replace = TRUE)
-    mat.boot <- NULL
-    for (j in sample.id) {
-      mat.boot <- rbind(mat.boot, Data[Data$series == j, ])
-    }
-    bootstrap_samples[[i]] <- mat.boot
-  }
+  bootstrap_samples <- lapply(1:n_boot, function(x) {
+    sample_id <- sample(unique_patients, n_series, replace = TRUE)
+    mat_boot <- do.call(rbind, lapply(sample_id, function(j) data[data$series == j, ]))
+    return(mat_boot)
+  })
   
   return(bootstrap_samples)
 }
 
-Boot_pre <- function(Data, timexgroup = TRUE) {
-  Dico.norm <- CreationBases(Data$position)
-  F.Bases <- Dico.norm$F.Bases
+boot_pre <- function(data, timexgroup = TRUE) {
+  bases <- create_bases(data$t)$bases
   
   if (timexgroup) {
-    F.Bases.timexgroup <- matrix(nrow = nrow(Data), ncol = ncol(F.Bases) * 2)
-    for (i in 1:nrow(Data)) {
-      if (Data$Group[i] == Data$Group[1]) {
-        F.Bases.timexgroup[i, ] <- c(F.Bases[i, ], rep(0, ncol(F.Bases)))
-      } else {
-        F.Bases.timexgroup[i, ] <- c(rep(0, ncol(F.Bases)), F.Bases[i, ])
-      }
-    }
-  } else {
-    F.Bases.timexgroup <- F.Bases
+    n <- nrow(data)
+    vec_group <- data$group
+    ref_group <- vec_group[1]
+    M <- ncol(bases)
+    
+    # Create a logical index indicating where vec_group is equal to ref_group
+    index_ref_group <- vec_group == ref_group
+    
+    # Initialize bases_timexgroup matrix
+    bases_timexgroup <- matrix(0, nrow = n, ncol = M * 2)
+    
+    # Fill the bases_timexgroup matrix using vectorized operations
+    bases_timexgroup[index_ref_group, 1:M] <- bases[index_ref_group, ]
+    bases_timexgroup[!index_ref_group, (M+1):(2*M)] <- bases[!index_ref_group, ]
+    
+    bases <- bases_timexgroup
   }
   
-  return(F.Bases.timexgroup)
+  
+  return(bases)
 }
 
+
 fit.boot <- function(Data, sig.init) {
-  pre.boot <- Boot_pre(Data)
+  pre.boot <- boot_pre(Data)
   # sig.init<-scalreg::scalreg(scale(pre.boot), scale(Data$Y))$hsigma
   
   lambda.grid = seq(1.2, sig.init, -0.1)*sqrt(2*log(ncol(pre.boot))/length(Data$Y))
@@ -164,33 +165,36 @@ create.CI <- function(diff.CI, data, sig.init) {
   return(as.data.frame(df.f))
 }
 
-f.test <- function(data, model, n = 1000) {
-  data.f <- data
-  data.f$Y <- data$Y - model$Res.F$X.fit - rep(model$U2$U2, model$ni)
-  data.f <- data.f[, c("series", "position", "Y", "Group")]
+f.test <- function(x, y, series, t,  name_group_var = "group", plmm_output, n_boot = 1000) {
+  # data.f <- data
+  y <- y - plmm_output$lasso_output$x_fit - rep(plmm_output$out_phi$phi, plmm_output$ni)
+  # data.f <- data.f[, c("series", "position", "Y", "Group")]
   
-  t.obs <- sort(unique(data$position))
+  t.obs <- sort(unique(t))
   
-  Samples <- Boot_samples(Data = data.f, n = n)
+  data <- data.frame(y, series, t, x[,name_group_var])
+  colnames(data)[4] = name_group_var
   
-  pb <- utils::txtProgressBar(min = 0, max = length(Samples), style = 3)
+  samples <- boot_samples(data = data, n_boot = n_boot)
   
-  pre.boot <- Boot_pre(data.f)
+  pb <- utils::txtProgressBar(min = 0, max = length(samples), style = 3)
+  
+  pre.boot <- boot_pre(data)
   sig.init <-scalreg::scalreg(scale(pre.boot), scale(data.f$Y))$hsigma
   
   res.boot <- list()
-  for (k in 1:length(Samples)) {
-    res.boot[[k]] <- fit.boot(Data = Samples[[k]], sig.init)
+  for (k in 1:length(samples)) {
+    res.boot[[k]] <- fit.boot(Data = samples[[k]], sig.init)
     
     utils::setTxtProgressBar(pb, k)
   }
   
   cat("\nCompleted fitting Bootstrap samples. Now formatting results, and generating figure.\n")
   
-  L2norm.df <- overall.test(res.boot, model = model)
+  L2norm.df <- overall.test(res.boot, plmm_output = plmm_output)
   
   pred.CI <- lapply(1:length(res.boot), function(i) {
-    pred.f(res.boot[[i]], Samples[[i]])
+    pred.f(res.boot[[i]], samples[[i]])
   })
   
   
