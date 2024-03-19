@@ -97,7 +97,7 @@ simulate_group_inter <- function(N = 50, n_mvnorm = 100, grouped = TRUE,
 # Add an argument predict_t to show predicted timepoints rather than just
 # observed timepoints
 
-f.hat.old = function(t, coef, group, keep = NULL) {
+f_predict = function(t, coef, group, keep = NULL) {
   
   bases = create_bases(t, keep = keep)$bases
   
@@ -111,7 +111,7 @@ f.hat.old = function(t, coef, group, keep = NULL) {
   
 }
 
-plot.fit <- function(x, y, series, t,  name_group_var = "group", 
+plot_fit <- function(x, y, series, t,  name_group_var = "group", 
                      plmm_output, predicted = FALSE) {
   data <- data.frame(y, series, t, x)
   
@@ -137,19 +137,19 @@ plot.fit <- function(x, y, series, t,  name_group_var = "group",
   t_cont <- seq(min(t_obs), max(t_obs), by = 0.1)
   
   predicted_f <- data.frame(c(t_cont, t_cont),
-    c(f.hat.old(
+    c(f_predict(
       t = t_cont,
       coef = plmm_output$lasso_output$alpha, group = plmm_output$lasso_output$out_f$group[1],
       keep = bases_functions$selected_bases
-    ) - mean(f.hat.old(
+    ) - mean(f_predict(
       t = t_obs,
       coef = plmm_output$lasso_output$alpha, group = plmm_output$lasso_output$out_f$group[1],
       keep = bases_functions$selected_bases
-    )), f.hat.old(
+    )), f_predict(
       t = t_cont,
       coef = plmm_output$lasso_output$alpha, group = 1 - plmm_output$lasso_output$out_f$group[1],
       keep = bases_functions$selected_bases
-    ) - mean(f.hat.old(
+    ) - mean(f_predict(
       t = t_obs,
       coef = plmm_output$lasso_output$alpha, group = 1 - plmm_output$lasso_output$out_f$group[1],
       keep = bases_functions$selected_bases
