@@ -49,7 +49,8 @@ tuned_plmm$hyperparameters
 tuned_plmm$lasso_output$theta
 
 # Visualize overall fit and nonlinear functions 
-plot.fit(fit.plmm, data.sim)
+plot_fit(x, y, series, t,  name_group_var = "group", 
+  plmm_output, predicted = FALSE)
 
 # Get debiased fixed-effects and pvalues
 posi = debias_plmm(x, y, series, tuned_plmm, a = 1, Z = NULL)
