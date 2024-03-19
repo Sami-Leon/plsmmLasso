@@ -1,4 +1,4 @@
-boot_samples <- function(data, n_boot) {
+sample_boot <- function(data, n_boot) {
   unique_patients <- unique(data$series)
   n_series <- length(unique_series)
   
@@ -11,7 +11,7 @@ boot_samples <- function(data, n_boot) {
   return(bootstrap_samples)
 }
 
-boot_pre <- function(data, timexgroup = TRUE) {
+create_bases_boot <- function(data, timexgroup = TRUE) {
   bases <- create_bases(data$t)$bases
   
   if (timexgroup) {
@@ -37,177 +37,169 @@ boot_pre <- function(data, timexgroup = TRUE) {
   return(bases)
 }
 
+fit_boot <- function(data, min_lambda) {
+  boot_bases <- create_bases_boot(data)
 
-fit.boot <- function(Data, sig.init) {
-  pre.boot <- boot_pre(Data)
-  # sig.init<-scalreg::scalreg(scale(pre.boot), scale(Data$Y))$hsigma
+  lambda_grid = seq(1.2, min_lambda, -0.1)*sqrt(2*log(ncol(boot_bases))/length(data$y))
   
-  lambda.grid = seq(1.2, sig.init, -0.1)*sqrt(2*log(ncol(pre.boot))/length(Data$Y))
+  cv_fit <- glmnet::cv.glmnet(boot_bases, data$y, alpha = 1, 
+                              lambda = lambda_grid)
   
-  cv_fit <- glmnet::cv.glmnet(pre.boot, Data$Y, alpha = 1, 
-                              lambda = lambda.grid)
+  final_fit <- glmnet::glmnet(boot_bases, data$y, alpha = 1, lambda = cv_fit$lambda.min)
+  fitted_values <- glmnet::predict.glmnet(final_fit, newx = boot_bases, s = cv_fit$lambda.min)
   
-  final_fit <- glmnet::glmnet(pre.boot, Data$Y, alpha = 1, lambda = cv_fit$lambda.min)
-  fitted_values <- glmnet::predict.glmnet(final_fit, newx = pre.boot, s = cv_fit$lambda.min)
+  data$f_fit <- fitted_values
   
-  Data$F.fit <- fitted_values
+  out_f <- data[, c("t", "f_fit", "group")]
   
-  out.F <- Data[, c("position", "F.fit", "Group")]
-  
-  out.F[out.F$Group == 0, ]$F.fit <- out.F[out.F$Group == 0, ]$F.fit - attr(scale(unique(out.F[out.F$Group == 0, ]$F.fit),
-                                                                                  scale = F
+  out_f[out_f$Group == 0, ]$f_fit <- out_f[out_f$Group == 0, ]$f_fit - attr(scale(unique(out_f[out_f$Group == 0, ]$f_fit),
+                                                                                  scale = FALSE
   ), "scaled:center")
-  out.F[out.F$Group == 1, ]$F.fit <- out.F[out.F$Group == 1, ]$F.fit - attr(scale(unique(out.F[out.F$Group == 1, ]$F.fit),
-                                                                                  scale = F
+  out_f[out_f$Group == 1, ]$f_fit <- out_f[out_f$Group == 1, ]$f_fit - attr(scale(unique(out_f[out_f$Group == 1, ]$f_fit),
+                                                                                  scale = FALSE
   ), "scaled:center")
-  return(list(out.F = out.F, Coef.Val = as.vector(final_fit$beta[, 1])))
+  return(list(out_f = out_f, alpha = as.vector(final_fit$beta[, 1])))
 }
 
-diff.f <- function(res.boot) {
-  fit0 <- res.boot[res.boot$Group == 0, ]
-  fit0 <- fit0[!duplicated(fit0$position), ]
-  fit0 <- fit0[order(fit0$position), ]
+calc_f_diff <- function(out_f) {
+  fit0 <- out_f[out_f$group == 0, ]
+  fit0 <- fit0[!duplicated(fit0$t), ]
+  fit0 <- fit0[order(fit0$t), ]
   
-  fit1 <- res.boot[res.boot$Group == 1, ]
-  fit1 <- fit1[!duplicated(fit1$position), ]
-  fit1 <- fit1[order(fit1$position), ]
+  fit1 <- out_f[out_f$group == 1, ]
+  fit1 <- fit1[!duplicated(fit1$t), ]
+  fit1 <- fit1[order(fit1$t), ]
   
-  out <- cbind(fit1$position, diff = fit0$F.fit - fit1$F.fit)
-  
-  colnames(out) <- c("position", "diff")
-  out <- as.data.frame(out)
+  out <- data.frame(t = fit1$t, diff = fit0$f_fit - fit1$f_fit)
   return(out)
 }
 
-overall.test <- function(list.boot.fit, model) {
-  df_list_fit <- lapply(seq_along(list.boot.fit), function(i) {
-    df <- list.boot.fit[[i]]$out.F
-    df$boot <- as.character(i) # Create a group variable
+test_overall_f <- function(list_fitted_boot, plmm_output) {
+  df_list_fit <- lapply(seq_along(list_fitted_boot), function(i) {
+    df <- list_fitted_boot[[i]]$out.F
+    df$boot <- as.character(i) 
     return(df)
   })
-  
-  diff.list <- lapply(df_list_fit, diff.f)
-  
-  Tobs <- sum((diff.f(model$Res.F$out.F)$diff)^2)
-  Tboot <- unlist(lapply(diff.list, function(x) {
+
+  diff_list <- lapply(df_list_fit, calc_f_diff)
+
+  T_obs <- sum((calc_f_diff(plmm_output$lasso_output$out_f)$diff)^2)
+  T_boot <- sapply(diff_list, function(x) {
     sum(x$diff^2)
-  }))
-  
-  pvalue <- pnorm(abs((2 * Tobs - mean(Tboot)) / sqrt(var(Tboot))),
-                  lower.tail = F
+  })
+
+  pvalue <- pnorm(abs((2 * T_obs - mean(T_boot)) / sqrt(var(T_boot))),
+    lower.tail = FALSE
   ) * 2
-  
-  df.overall.f <- data.frame(Tobs, pvalue)
-  
-  colnames(df.overall.f) <- c("T", "p-value")
-  
-  return(df.overall.f)
+
+  overall_f <- data.frame(T_obs, pvalue)
+
+  colnames(overall_f) <- c("T", "p-value")
+
+  return(overall_f)
 }
 
-pred.f <- function(model, data, byseq = 0.1) {
-  Dico.norm <- CreationBases(data$position)
+pred_f <- function(model, data, byseq = 0.1) {
+  selected_bases <- create_bases(data$t)$selected_bases
   
-  t.cont <- seq(min(data$position), max(data$position), by = byseq)
-  t.obs <- sort(unique(data$position))
-  # browser()
+  t_cont <- seq(min(data$t), max(data$t), by = byseq)
+  t_obs <- sort(unique(data$t))
+
   df.F <- data.frame(
-    c(t.cont, t.cont),
-    c(f.hat.old(
-      t = t.cont,
-      coef = model$Coef.Val, group = model$out.F$Group[1],
-      keep = Dico.norm$Num.Bases.Pres
-    ) - mean(f.hat.old(
-      t = t.obs,
-      coef = model$Coef.Val, group = model$out.F$Group[1],
-      keep = Dico.norm$Num.Bases.Pres
-    )), f.hat.old(
-      t = t.cont,
-      coef = model$Coef.Val, group = 1 - model$out.F$Group[1],
-      keep = Dico.norm$Num.Bases.Pres
-    ) - mean(f.hat.old(
-      t = t.obs,
-      coef = model$Coef.Val, group = 1 - model$out.F$Group[1],
-      keep = Dico.norm$Num.Bases.Pres
+    c(t_cont, t_cont),
+    c(f_predict(
+      t = t_cont,
+      coef = model$alpha, group = model$out_f$group[1],
+      keep = selected_bases
+    ) - mean(f_predict(
+      t = t_obs,
+      coef = model$alpha, group = model$out_f$group[1],
+      keep = selected_bases
+    )), f_predict(
+      t = t_cont,
+      coef = model$alpha, group = 1 - model$out_f$group[1],
+      keep = selected_bases
+    ) - mean(f_predict(
+      t = t_obs,
+      coef = model$alpha, group = 1 - model$out_f$group[1],
+      keep = selected_bases
     ))),
-    c(rep(0, length(t.cont)), rep(1, length(t.cont)))
+    c(rep(0, length(t_cont)), rep(1, length(t_cont)))
   )
   
-  colnames(df.F) <- c("position", "F.fit", "Group")
+  colnames(df.F) <- c("t", "f_fit", "group")
   return(df.F)
 }
 
-create.CI <- function(diff.CI, data, sig.init) {
-  dbar <- colMeans(do.call("rbind", lapply(diff.CI, function(x) {
+create_CI <- function(list_diff_CI, data, min_lambda) {
+  d_bar <- colMeans(do.call("rbind", lapply(list_diff_CI, function(x) {
     x$diff
   })))
   
-  sbar <- sqrt(colMeans(do.call("rbind", lapply(diff.CI, function(x) {
-    (x$diff - dbar)^2
+  s_bar <- sqrt(colMeans(do.call("rbind", lapply(list_diff_CI, function(x) {
+    (x$diff - d_bar)^2
   }))))
   
-  Mb <- unlist(lapply(diff.CI, function(x) {
-    max(abs(x$diff - dbar) / sbar)
+  M_b <- unlist(lapply(list_diff_CI, function(x) {
+    max(abs(x$diff - d_bar) / s_bar)
   }))
   
-  qb <- quantile(Mb, probs = 0.975)
+  q_b <- quantile(M_b, probs = 0.975)
   
-  CIlow <- data.frame(position = diff.CI[[1]]$position, low = dbar - qb * sbar)
-  CIup <- data.frame(position = diff.CI[[1]]$position, up = dbar + qb * sbar)
+  CI_low <- data.frame(t = list_diff_CI[[1]]$t, low = d_bar - q_b * s_bar)
+  CI_up <- data.frame(t = list_diff_CI[[1]]$t, up = d_bar + q_b * s_bar)
   
-  set.seed(123)
-  obs = diff.f(pred.f(fit.boot(data, sig.init), data, byseq = 0.1))
+  obs = calc_f_diff(pred_f(fit_boot(data, min_lambda), data, byseq = 0.1))
   
-  df.f <- data.frame(obs, CIlow[, 2], CIup[, 2])
-  colnames(df.f) <- c("Month", "Group diff.", "CI lower", "CI upper")
-  # df.f = apply(df.f, 2, function(x) round(x, 2))
-  rownames(df.f) <- NULL
+  CI_diff_f <- data.frame(obs, CIlow[, 2], CIup[, 2])
+  colnames(CI_diff_f) <- c("t", "Group diff.", "Lower 95%", "Upper 95%")
+  rownames(CI_diff_f) <- NULL
   
-  return(as.data.frame(df.f))
+  return(CI_diff_f)
 }
 
 f.test <- function(x, y, series, t,  name_group_var = "group", plmm_output, n_boot = 1000) {
-  # data.f <- data
   y <- y - plmm_output$lasso_output$x_fit - rep(plmm_output$out_phi$phi, plmm_output$ni)
-  # data.f <- data.f[, c("series", "position", "Y", "Group")]
-  
-  t.obs <- sort(unique(t))
+
+  t_obs <- sort(unique(t))
   
   data <- data.frame(y, series, t, x[,name_group_var])
   colnames(data)[4] = name_group_var
   
-  samples <- boot_samples(data = data, n_boot = n_boot)
+  samples <- sample_boot(data = data, n_boot = n_boot)
   
   pb <- utils::txtProgressBar(min = 0, max = length(samples), style = 3)
   
-  pre.boot <- boot_pre(data)
-  sig.init <-scalreg::scalreg(scale(pre.boot), scale(data.f$Y))$hsigma
+  min_lambda <-scalreg::scalreg(scale(create_bases_boot(data)), scale(data$y))$hsigma
+
+  fitted_boot <- vector("list", n_boot)
   
-  res.boot <- list()
-  for (k in 1:length(samples)) {
-    res.boot[[k]] <- fit.boot(Data = samples[[k]], sig.init)
+  for (k in 1:n_boot) {
+    fitted_boot[[k]] <- fit_boot(data = samples[[k]], min_lambda = min_lambda)
     
     utils::setTxtProgressBar(pb, k)
   }
   
   cat("\nCompleted fitting Bootstrap samples. Now formatting results, and generating figure.\n")
   
-  L2norm.df <- overall.test(res.boot, plmm_output = plmm_output)
+  overall_test_results <- test_overall_f(list_fitted_boot = fitted_boot, 
+                                         plmm_output = plmm_output)
   
-  pred.CI <- lapply(1:length(res.boot), function(i) {
-    pred.f(res.boot[[i]], samples[[i]])
+  predicted_f <- lapply(1:length(fitted_boot), function(i) {
+    pred_f(model = fitted_boot[[i]], data = samples[[i]])
   })
   
   
-  diff.CI <- lapply(pred.CI, diff.f)
-  df.CI <- create.CI(diff.CI, data.f, sig.init)
+  diff_predicted_f <- lapply(predicted_f, calc_f_diff)
+  CI_f <- create_CI(diff_predicted_f, data, min_lambda)
   
-  plot.CI <- ggplot(df.CI, aes(x = Month, y = `Group diff.`)) +
+  plot_CI <- ggplot(CI_f, aes(x = t, y = `Group diff.`)) +
     geom_line() +
     geom_hline(yintercept = 0, linetype = "dashed") +
-    geom_line(aes(Month, `CI lower`), data = df.CI, col = "blue") +
-    geom_line(aes(Month, `CI upper`), data = df.CI, col = "blue") +
-    labs(x = "Time", y = "Difference") +
-    scale_x_continuous(breaks = t.obs)
+    geom_line(aes(Month, `CI lower`), data = CI_f, col = "blue") +
+    geom_line(aes(Month, `CI upper`), data = CI_f, col = "blue") +
+    scale_x_continuous(breaks = t_obs)
   
-  return(list(L2norm.df = L2norm.df, df.CI = df.CI, plot.CI = plot.CI))
+  return(list(overall_test_results = overall_test_results, CI_f = CI_f,
+              plot_CI = plot_CI))
 }
