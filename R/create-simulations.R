@@ -93,161 +93,112 @@ simulate_group_inter <- function(N = 50, n_mvnorm = 100, grouped = TRUE,
   return(list(sim = sim, phi = phi, f_val = f_val))
 }
 
+# Update these functions to only plot the estimates without the truth
+# Add an argument predict_t to show predicted timepoints rather than just
+# observed timepoints
+
 f.hat.old = function(t, coef, group, keep = NULL) {
   
-  F.Bases = CreationBases(t, keep = keep)$F.Bases
+  bases = create_bases(t, keep = keep)$bases
   
   if(group == 0) {
-    coef = coef[1:ncol(F.Bases)]
+    coef = coef[1:ncol(bases)]
   } else {
-    coef = coef[(ncol(F.Bases)+1):length(coef)]
+    coef = coef[(ncol(bases)+1):length(coef)]
   }
   
-  return(F.Bases %*% coef)
+  return(bases %*% coef)
   
 }
 
-plot.fit <- function(list.EM.out, data, same = FALSE) {
-  EM.out <- list.EM.out
+plot.fit <- function(x, y, series, t,  name_group_var = "group", 
+                     plmm_output, predicted = FALSE) {
+  data <- data.frame(y, series, t, x)
   
-  data1 <- data[[1]]
-  data1$phi <- data[[2]]
-  data1$f <- data[[3]]
+  data$f_fit <- plmm_output$lasso_output$out_f$f_fit
+  data$x_fit <- plmm_output$lasso_output$x_fit
+  data$phi <- rep(plmm_output$out_phi$phi, table(data$series))
+
+  # data <- dplyr::mutate(
+  #   dplyr::group_by(data, .data[[name_group_var]], t),
+  #   mean_trajectories = sum(mean(x_fit) + mean(phi) + mean(f_fit))
+  # )
   
-  t.obs <- sort(unique(data1$position))
+  p <- ggplot2::ggplot(data = data, aes(x = t, y = y))
+
+  # data.dedup <- data[!duplicated(data$series), ]
+  # data.dedup <- data.dedup[, c(name_group_var, "phi")]
+  # colnames(data.dedup)[2:3] <- c("truth", "estimate")
   
-  data1$X <- as.matrix(data1[, 4:6]) %*% cbind(c(3, 2, 1))
+  bases_functions <- create_bases(t)
+
+  t_obs = sort(unique(t))
   
-  bluemean_X <- data1 %>%
-    group_by(Group) %>%
-    mutate(mean = mean(X)) %>%
-    ungroup()
+  t_cont <- seq(min(t_obs), max(t_obs), by = 0.1)
   
-  bluemean_U2 <- data1 %>%
-    group_by(Group) %>%
-    mutate(mean = mean(phi)) %>%
-    ungroup()
-  
-  data1$blueline <- data1$f + bluemean_U2$mean + bluemean_X$mean
-  
-  mean_blueline <- data1 %>%
-    group_by(Group, position) %>%
-    mutate(mean = mean(blueline)) %>%
-    ungroup()
-  
-  data1$blueline <- mean_blueline$mean
-  
-  data1$F.fit <- EM.out$Res.F$out.F$F.fit
-  data1$X.fit <- EM.out$Res.F$X.fit
-  data1$U2 <- rep(EM.out$U2$U2, table(data1$series))
-  
-  mean_X <- data1 %>%
-    group_by(Group) %>%
-    mutate(mean = mean(X.fit)) %>%
-    ungroup()
-  
-  mean_U2 <- data1 %>%
-    group_by(Group) %>%
-    mutate(mean = mean(U2)) %>%
-    ungroup()
-  
-  redline <- EM.out$Res.F$out.F$F.fit + mean_X$mean + mean_U2$mean
-  data1$redline <- redline
-  
-  mean_redline <- data1 %>%
-    group_by(Group, position) %>%
-    mutate(mean = mean(redline)) %>%
-    ungroup()
-  
-  data1$redline <- mean_redline$mean
-  
-  p <- ggplot(data = data1, aes(x = position, y = Y))
-  
-  group_label <- c("0" = "Group1", "1" = "Group2")
-  
-  F.plot <- p + geom_line(aes(x = position, y = Y, group = series)) +
-    geom_line(aes(x = position, y = blueline, color = "truth"), data = data1, size = 1.3) +
-    geom_line(aes(x = position, y = redline, color = "estimate"),
-              data = data1, size = 1.3
-    ) +
-    scale_color_manual(name = "Legend", values = c("truth" = "blue", "estimate" = "red")) +
-    facet_grid(. ~ Group, labeller = as_labeller(group_label))
-  
-  p <- ggplot(data = data1, aes(x = position, y = Y))
-  
-  group_label <- c("0" = "Group1", "1" = "Group2")
-  
-  data1.dedup <- data1[!duplicated(data1$series), ]
-  data1.dedup <- data1.dedup[, c("Group", "phi", "U2")]
-  colnames(data1.dedup)[2:3] <- c("truth", "estimate")
-  
-  Dico.norm <- CreationBases(data1$position)
-  
-  
-  t.cont <- seq(min(t.obs), max(t.obs), by = 0.1)
-  values <- f(t.cont, A = 1, omega = 60) - mean(f(t.obs, A = 1, omega = 60))
-  
-  if (same) {
-    values.1 <- values
-  } else {
-    values.1 <- f(t.cont, A = 1.5, omega = 110) - mean(f(t.obs, A = 1.5, omega = 110))
-  }
-  
-  
-  
-  df.F <- data.frame(
-    c(t.cont, t.cont), c(values, values.1),
+  predicted_f <- data.frame(c(t_cont, t_cont),
     c(f.hat.old(
-      t = t.cont,
-      coef = EM.out$Res.F$Coef.Val, group = EM.out$Res.F$out.F$Group[1],
-      keep = Dico.norm$Num.Bases.Pres
+      t = t_cont,
+      coef = plmm_output$lasso_output$alpha, group = plmm_output$lasso_output$out_f$group[1],
+      keep = bases_functions$selected_bases
     ) - mean(f.hat.old(
-      t = t.obs,
-      coef = EM.out$Res.F$Coef.Val, group = EM.out$Res.F$out.F$Group[1],
-      keep = Dico.norm$Num.Bases.Pres
+      t = t_obs,
+      coef = plmm_output$lasso_output$alpha, group = plmm_output$lasso_output$out_f$group[1],
+      keep = bases_functions$selected_bases
     )), f.hat.old(
-      t = t.cont,
-      coef = EM.out$Res.F$Coef.Val, group = 1 - EM.out$Res.F$out.F$Group[1],
-      keep = Dico.norm$Num.Bases.Pres
+      t = t_cont,
+      coef = plmm_output$lasso_output$alpha, group = 1 - plmm_output$lasso_output$out_f$group[1],
+      keep = bases_functions$selected_bases
     ) - mean(f.hat.old(
-      t = t.obs,
-      coef = EM.out$Res.F$Coef.Val, group = 1 - EM.out$Res.F$out.F$Group[1],
-      keep = Dico.norm$Num.Bases.Pres
+      t = t_obs,
+      coef = plmm_output$lasso_output$alpha, group = 1 - plmm_output$lasso_output$out_f$group[1],
+      keep = bases_functions$selected_bases
     ))),
-    c(rep(0, length(t.cont)), rep(1, length(t.cont)))
+    c(rep(0, length(t_cont)), rep(1, length(t_cont)))
   )
   
-  colnames(df.F) <- c("t", "f", "F.fit", "Group")
+  colnames(predicted_f) <- c("t", "f_cont", "group")
   
-  means <- aggregate(cbind(phi, X, U2, X.fit) ~ Group, data = data1, FUN = mean)
-  names(means) <- c("Group", "phi", "X", "U2", "X.fit")
+  means <- aggregate(cbind(phi, x_fit) ~ group, data = data, FUN = mean)
+  names(means) <- c("group", "phi", "x_fit")
   
-  df.F <- merge(df.F, means, by = "Group")
+  predicted_f <- merge(predicted_f, means, by = "group")
   
-  df.F$f.overall <- df.F$f + df.F$X + df.F$phi
-  df.F$F.fit.overall <- df.F$F.fit + df.F$X.fit + df.F$U2
+  predicted_f$mean_trajectories <- predicted_f$f_cont + predicted_f$x_fit + predicted_f$phi
   
+  obs_f = predicted_f[predicted_f$t %in% t_obs, ]
   
-  p.F.overall <- p + geom_line(aes(x = position, y = Y, group = series)) +
-    geom_line(aes(x = t, y = f.overall, color = "truth"), size = 1.3, data = df.F) +
-    geom_line(aes(x = t, y = F.fit.overall, color = "estimate"), data = df.F, size = 1.3) +
-    scale_color_manual(name = "Legend", values = c("truth" = "blue", "estimate" = "red")) +
-    facet_grid(. ~ Group, labeller = as_labeller(group_label)) +
-    ylab("Y") + xlab("Time") + geom_point(aes(x = t, y = f.overall), col = "blue", data = df.F[df.F$t %in% t.obs, ], size = 2.5) +
-    geom_point(aes(x = t, y = F.fit.overall), col = "red", data = df.F[df.F$t %in% t.obs, ], size = 2.5) +
-    scale_x_continuous(breaks = t.obs)
+  if(predicted) {
+    p.F.overall <- p + geom_line(aes(x = t, y = y, group = series)) +
+      geom_line(aes(x = t, y = mean_trajectories), data = predicted_f, size = 1,
+                col = "red") +
+      facet_grid(. ~ group) + geom_point(aes(x = t, y = mean_trajectories), 
+                                         data = obs_f, size = 2,
+                                         col = "red") +
+      scale_x_continuous(breaks = t_obs)
+    
+    p.F <- ggplot(aes(x = t, y = f_cont), data = predicted_f) +
+      geom_line(size = 1, col = "red") +
+      facet_grid(. ~ group) +
+      geom_point(aes(x = t, y = f_cont),
+                 data = obs_f, size = 2, col = "red") +
+      scale_x_continuous(breaks = t_obs)
+  } else {
+    p.F.overall <- p + geom_line(aes(x = t, y = y, group = series)) +
+      geom_line(aes(x = t, y = mean_trajectories), data = obs_f, size = 1,
+                col = "red") +
+      geom_point(aes(x = t, y = mean_trajectories), 
+                 data = obs_f, size = 2, col = "red") +
+      facet_grid(. ~ group) + 
+      scale_x_continuous(breaks = t_obs)
+    
+    p.F <- ggplot(aes(x = t, y = f_cont), data = obs_f) +
+      geom_line(size = 1, col = "red") +
+      facet_grid(. ~ group) +
+      geom_point(size = 2, col = "red") +
+      scale_x_continuous(breaks = t_obs)
+  }
   
-  p.F <- ggplot(aes(x = t, y = f), data = df.F) +
-    geom_line(aes(x = t, y = f, color = "truth"), size = 1.3, data = df.F) +
-    geom_line(aes(x = t, y = F.fit, color = "estimate"), data = df.F, size = 1.3) +
-    scale_color_manual(name = "Legend", values = c("truth" = "blue", "estimate" = "red")) +
-    facet_grid(. ~ Group, labeller = as_labeller(group_label)) +
-    ylab("Y") +
-    xlab("Time") +
-    geom_point(aes(x = t, y = f), col = "blue", data = df.F[df.F$t %in% t.obs, ], size = 2.5) +
-    geom_point(aes(x = t, y = F.fit), col = "red", data = df.F[df.F$t %in% t.obs, ], size = 2.5) +
-    ylim(c(-1.5, 10)) +
-    scale_x_continuous(breaks = t.obs)
-  
-  ggarrange(p.F.overall, p.F, ncol = 1, nrow = 2, common.legend = TRUE, legend = "bottom")
+  ggarrange(p.F.overall, p.F, ncol = 1, nrow = 2, common.legend = TRUE, 
+            legend = "bottom")
 }
