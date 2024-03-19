@@ -93,10 +93,6 @@ simulate_group_inter <- function(N = 50, n_mvnorm = 100, grouped = TRUE,
   return(list(sim = sim, phi = phi, f_val = f_val))
 }
 
-# Update these functions to only plot the estimates without the truth
-# Add an argument predict_t to show predicted timepoints rather than just
-# observed timepoints
-
 f_predict = function(t, coef, group, keep = NULL) {
   
   bases = create_bases(t, keep = keep)$bases
@@ -119,17 +115,6 @@ plot_fit <- function(x, y, series, t,  name_group_var = "group",
   data$x_fit <- plmm_output$lasso_output$x_fit
   data$phi <- rep(plmm_output$out_phi$phi, table(data$series))
 
-  # data <- dplyr::mutate(
-  #   dplyr::group_by(data, .data[[name_group_var]], t),
-  #   mean_trajectories = sum(mean(x_fit) + mean(phi) + mean(f_fit))
-  # )
-  
-  p <- ggplot2::ggplot(data = data, aes(x = t, y = y))
-
-  # data.dedup <- data[!duplicated(data$series), ]
-  # data.dedup <- data.dedup[, c(name_group_var, "phi")]
-  # colnames(data.dedup)[2:3] <- c("truth", "estimate")
-  
   bases_functions <- create_bases(t)
 
   t_obs = sort(unique(t))
@@ -167,6 +152,8 @@ plot_fit <- function(x, y, series, t,  name_group_var = "group",
   predicted_f$mean_trajectories <- predicted_f$f_cont + predicted_f$x_fit + predicted_f$phi
   
   obs_f = predicted_f[predicted_f$t %in% t_obs, ]
+  
+  p <- ggplot2::ggplot(data = data, aes(x = t, y = y))
   
   if(predicted) {
     p.F.overall <- p + geom_line(aes(x = t, y = y, group = series)) +
