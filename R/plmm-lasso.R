@@ -149,28 +149,25 @@ joint_lasso <- function(x, y, t, name_group_var, bases, se, gamma,
   ))
 }
 
-#' Fit a high-dimensional PLMM with lasso penalty
+#' Fit a high-dimensional PLMM 
 #'
-#' Fits a partial linear mixed effects model (PLMM) with a lasso penalty on the fixed effects 
-#' and the coefficient associated with the bases functions via penalized maximum likelihood 
-#' using the Expectation-Maximization (EM) algorithm. The bases functions represent a nonlinear effect of time.
+#' Fits a partial linear mixed effects model (PLMM) via penalized maximum likelihood.
 #' 
 #' @param x A matrix of covariates.
 #' @param y A continuous response variable.
 #' @param series A vector representing the random intercept.
-#' @param t A numerical vector representing the time variable.
-#' @param name_group_var The name of the grouping variable in the \code{x} matrix.
+#' @param t A numeric vector indicating the time points.
+#' @param name_group_var A character string specifying the name of the grouping variable in the \code{x} matrix.
 #' @param bases A matrix of bases functions.
 #' @param gamma The regularization parameter for the nonlinear effect of time
 #' @param lambda The regularization parameter for the fixed effects.
 #' @param timexgroup Logical indicating whether to use a time-by-group interaction. 
 #'                   If \code{TRUE}, each group in \code{name_group_var} will have its own estimate of the time effect.
-#' @param criterion The information criterion to be used for model selection. Options are "BIC", "BICC", or "EBIC".
+#' @param criterion The information criterion to be computed. Options are "BIC", "BICC", or "EBIC".
 #' @param cvg_tol Convergence tolerance for the algorithm.
 #' @param max_iter Maximum number of iterations allowed for convergence.
 #' 
 #' @return A list containing the following components:
-#' \describe{
 #'   \item{lasso_output}{A list with the fitted values for the fixed effect and nonlinear effect. The estimated coeffcients for the fixed effects and nonlinear effect. The indices of the used bases functions.}
 #'   \item{se}{Estimated standard deviation of the residuals.}
 #'   \item{su}{Estimated standard deviation of the random intercept.}
@@ -179,7 +176,18 @@ joint_lasso <- function(x, y, t, name_group_var, bases, se, gamma,
 #'   \item{hyperparameters}{Data frame with lambda and gamma values.}
 #'   \item{converged}{Logical indicating if the algorithm converged.}
 #'   \item{crit}{Value of the selected information criterion.}
-#' }
+#'   
+#' @details
+#' This function fits a partial linear mixed effects model with a lasso penalty on the fixed effects 
+#' and the coefficient associated with the bases functions. It uses the Expectation-Maximization (EM) algorithm 
+#' for estimation. The bases functions represent a nonlinear effect of time. 
+#' 
+#' The model includes a random intercept for each level of the variable specified by \code{series}. Additionally, if \code{timexgroup} is 
+#' set to \code{TRUE}, the model includes a time-by-group interaction, allowing each group of \code{name_group_var} to have its own estimate 
+#' of the nonlinear function, which can capture group-specific nonlinearities over time.
+#' 
+#' The algorithm iteratively updates the estimates until convergence or until the maximum number of iterations is reached.
+#' 
 #' @examples
 #' \dontrun{
 #' # Generate example data
@@ -188,7 +196,7 @@ joint_lasso <- function(x, y, t, name_group_var, bases, se, gamma,
 #'                                 timepoints = 3:5, nonpara_inter = TRUE,
 #'                                 sample_from = seq(0,52,13), cst_ni = FALSE,
 #'                                 cos = FALSE, A_vec = c(1, 1.5))
-#' sim = data.sim$sim
+#' sim = data_sim$sim
 #' x = as.matrix(sim[,-1:-3])
 #' y = sim$y
 #' series = sim$series
@@ -196,9 +204,9 @@ joint_lasso <- function(x, y, t, name_group_var, bases, se, gamma,
 #' bases = create_bases(t)
 #' lambda <- 0.0046
 #' gamma <- 0.00000001
-#' plmm_lasso(x, y, series, t, name_group_var = "group", bases$bases,
-#' gamma = gamma, lambda = lambda, timexgroup = TRUE,
-#'                        criterion = "BIC")
+#'plmm_output = plmm_lasso(x, y, series, t, name_group_var = "group", bases$bases,
+#'                         gamma = gamma, lambda = lambda, timexgroup = TRUE,
+#'                         criterion = "BIC")
 #' }
 #' 
 #' @export

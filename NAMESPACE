@@ -3,3 +3,5 @@
 export(create_bases)
 export(filter_nonzero_bases)
 export(plmm_lasso)
+export(simulate_group_inter)
+export(tune_plmm)

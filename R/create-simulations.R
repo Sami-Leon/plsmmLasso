@@ -11,6 +11,28 @@ cst_cor <- function(n, rho) {
   return(m)
 }
 
+#' Simulate PLMM
+#'
+#' Simulate a partial linear mixed-effects model.
+#'
+#' @param N Number of subjects.
+#' @param n_mvnorm Number of covariate generates from a multivariate normal distribution.
+#' @param grouped Logical indicating whether to include grouping effect.
+#' @param timepoints Vector specifying timepoints for each subject.
+#' @param nonpara_inter Logical indicating whether the nonparametric function is specific to each group.
+#' @param sample_from Vector of time points to sample from.
+#' @param cst_ni Logical indicating whether to sample time points for each subject or fix them.
+#' @param cos Logical indicating whether to use cosine function for second group.
+#' @param A_vec Vector of amplitudes for the nonlinear functions for each group.
+#' @return A list with three components: 
+#'   \item{sim}{Simulated data frame.}
+#'   \item{phi}{Individual random intercepts.}
+#'   \item{f_val}{Values of the nonlinear functions.}
+#' @export
+#' @examples
+#' simulate_group_inter(N = 50, n_mvnorm = 100, grouped = TRUE,
+#'                      timepoints = 3:5, nonpara_inter = TRUE,
+#'                      sample_from = seq(0, 10, by = 0.1), cst_ni = TRUE, cos = FALSE, A_vec = c(1, 1.5))
 simulate_group_inter <- function(N = 50, n_mvnorm = 100, grouped = TRUE,
                                  timepoints = 3:5, nonpara_inter = TRUE,
                                  sample_from, cst_ni, cos = FALSE, A_vec = c(1, 1.5)) {
@@ -71,7 +93,7 @@ simulate_group_inter <- function(N = 50, n_mvnorm = 100, grouped = TRUE,
     }
   }
   
-  x <- MASS::mvrnorm(nrow(sim), rep(0, n_mvnorm - 1), cst_cor(n_mvnorm - 1, 0))
+  x <- MASS::mvrnorm(nrow(sim), rep(0, n_mvnorm + 1), cst_cor(n_mvnorm + 1, 0))
   
   sim <- cbind(sim, x)
   

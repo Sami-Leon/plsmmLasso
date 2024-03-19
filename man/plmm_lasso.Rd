@@ -2,7 +2,7 @@
 % Please edit documentation in R/plmm-lasso.R
 \name{plmm_lasso}
 \alias{plmm_lasso}
-\title{Fit a high-dimensional PLMM with lasso penalty}
+\title{Fit a high-dimensional PLMM}
 \usage{
 plmm_lasso(
   x,
@@ -26,9 +26,9 @@ plmm_lasso(
 
 \item{series}{A vector representing the random intercept.}
 
-\item{t}{A numerical vector representing the time variable.}
+\item{t}{A numeric vector indicating the time points.}
 
-\item{name_group_var}{The name of the grouping variable in the \code{x} matrix.}
+\item{name_group_var}{A character string specifying the name of the grouping variable in the \code{x} matrix.}
 
 \item{bases}{A matrix of bases functions.}
 
@@ -39,7 +39,7 @@ plmm_lasso(
 \item{timexgroup}{Logical indicating whether to use a time-by-group interaction.
 If \code{TRUE}, each group in \code{name_group_var} will have its own estimate of the time effect.}
 
-\item{criterion}{The information criterion to be used for model selection. Options are "BIC", "BICC", or "EBIC".}
+\item{criterion}{The information criterion to be computed. Options are "BIC", "BICC", or "EBIC".}
 
 \item{cvg_tol}{Convergence tolerance for the algorithm.}
 
@@ -47,7 +47,6 @@ If \code{TRUE}, each group in \code{name_group_var} will have its own estimate o
 }
 \value{
 A list containing the following components:
-\describe{
 \item{lasso_output}{A list with the fitted values for the fixed effect and nonlinear effect. The estimated coeffcients for the fixed effects and nonlinear effect. The indices of the used bases functions.}
 \item{se}{Estimated standard deviation of the residuals.}
 \item{su}{Estimated standard deviation of the random intercept.}
@@ -57,11 +56,19 @@ A list containing the following components:
 \item{converged}{Logical indicating if the algorithm converged.}
 \item{crit}{Value of the selected information criterion.}
 }
-}
 \description{
-Fits a partial linear mixed effects model (PLMM) with a lasso penalty on the fixed effects
-and the coefficient associated with the bases functions via penalized maximum likelihood
-using the Expectation-Maximization (EM) algorithm. The bases functions represent a nonlinear effect of time.
+Fits a partial linear mixed effects model (PLMM) via penalized maximum likelihood.
+}
+\details{
+This function fits a partial linear mixed effects model with a lasso penalty on the fixed effects
+and the coefficient associated with the bases functions. It uses the Expectation-Maximization (EM) algorithm
+for estimation. The bases functions represent a nonlinear effect of time.
+
+The model includes a random intercept for each level of the variable specified by \code{series}. Additionally, if \code{timexgroup} is
+set to \code{TRUE}, the model includes a time-by-group interaction, allowing each group of \code{name_group_var} to have its own estimate
+of the nonlinear function, which can capture group-specific nonlinearities over time.
+
+The algorithm iteratively updates the estimates until convergence or until the maximum number of iterations is reached.
 }
 \examples{
 \dontrun{
@@ -71,7 +78,7 @@ data_sim = simulate_group_inter(N = 50, n_mvnorm = 3, grouped = TRUE,
                                 timepoints = 3:5, nonpara_inter = TRUE,
                                 sample_from = seq(0,52,13), cst_ni = FALSE,
                                 cos = FALSE, A_vec = c(1, 1.5))
-sim = data.sim$sim
+sim = data_sim$sim
 x = as.matrix(sim[,-1:-3])
 y = sim$y
 series = sim$series
@@ -79,9 +86,9 @@ t = sim$t
 bases = create_bases(t)
 lambda <- 0.0046
 gamma <- 0.00000001
-plmm_lasso(x, y, series, t, name_group_var = "group", bases$bases,
-gamma = gamma, lambda = lambda, timexgroup = TRUE,
-                       criterion = "BIC")
+plmm_output = plmm_lasso(x, y, series, t, name_group_var = "group", bases$bases,
+                        gamma = gamma, lambda = lambda, timexgroup = TRUE,
+                        criterion = "BIC")
 }
 
 }
