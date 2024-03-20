@@ -23,7 +23,7 @@ tune_plmm(
 
 \item{y}{A continuous vector of response variable.}
 
-\item{series}{A vector representing the random intercept.}
+\item{series}{A variable representing different series or groups in the data modeled as a random intercept.}
 
 \item{t}{A numeric vector indicating the time points.}
 

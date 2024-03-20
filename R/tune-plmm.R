@@ -5,7 +5,7 @@
 #'
 #' @param x A matrix of predictors.
 #' @param y A continuous vector of response variable.
-#' @param series A vector representing the random intercept.
+#' @param series A variable representing different series or groups in the data modeled as a random intercept.
 #' @param t A numeric vector indicating the time points.
 #' @param name_group_var A character string specifying the name of the grouping variable.
 #' @param bases A matrix of bases functions.

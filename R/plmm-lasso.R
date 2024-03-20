@@ -153,9 +153,9 @@ joint_lasso <- function(x, y, t, name_group_var, bases, se, gamma,
 #'
 #' Fits a partial linear mixed effects model (PLMM) via penalized maximum likelihood.
 #' 
-#' @param x A matrix of covariates.
-#' @param y A continuous response variable.
-#' @param series A vector representing the random intercept.
+#' @param x A matrix of predictor variables.
+#' @param y A continuous vector of response variable.
+#' @param series A variable representing different series or groups in the data modeled as a random intercept.
 #' @param t A numeric vector indicating the time points.
 #' @param name_group_var A character string specifying the name of the grouping variable in the \code{x} matrix.
 #' @param bases A matrix of bases functions.

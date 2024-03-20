@@ -1,3 +1,45 @@
+#' Debias coefficients estimated from PLMM
+#'
+#' This function debias the lasso coefficients estimated from a partial longitudinal mixed-effects model (\code{\link{plmm_lasso}}) 
+#' and computes p-values.
+#' 
+#' @param x A matrix of predictor variables.
+#' @param y A continuous vector of response variable.
+#' @param series A variable representing different series or groups in the data modeled as a random intercept.
+#' @param plmm_output Output object obtained from the (\code{\link{plmm_lasso}}) function.
+#' @param a Scaling parameter (default is 1). Adjusts the influence of the regularization term on the debiasing process.
+#' @param Z (Optional) Pre-computed score matrix. If provided, it will be used directly for debiasing.
+#' 
+#' @return A data frame containing debiased coefficients, standard errors, confidence intervals, and p-values.
+#' 
+#' @details The function \code{debias_plmm} computes a debiased estimate of the coefficients obtained from the penalized 
+#' longitudinal mixed-effects model. It involves two main steps:
+#' 1. Calculating a debiasing matrix based on the residual score matrix obtained from the initial model estimation.
+#' 2. Adjusting the original coefficients using the debiasing matrix.
+#' 
+#' @examples
+#' \dontrun{
+#' # Generate example data
+#' set.seed(123)
+#' data_sim = simulate_group_inter(N = 50, n_mvnorm = 3, grouped = TRUE,
+#'                                 timepoints = 3:5, nonpara_inter = TRUE,
+#'                                 sample_from = seq(0,52,13), cst_ni = FALSE,
+#'                                 cos = FALSE, A_vec = c(1, 1.5))
+#' sim = data_sim$sim
+#' x = as.matrix(sim[,-1:-3])
+#' y = sim$y
+#' series = sim$series
+#' t = sim$t
+#' bases = create_bases(t)
+#' lambda <- 0.0046
+#' gamma <- 0.00000001
+#'plmm_output = plmm_lasso(x, y, series, t, name_group_var = "group", bases$bases,
+#'                         gamma = gamma, lambda = lambda, timexgroup = TRUE,
+#'                         criterion = "BIC")
+#' debias_plmm(x, y, series, plmm_output)                       
+#' }
+#' 
+#' @export
 debias_plmm <- function(x, y, series, plmm_output, a = 1, Z = NULL) {
   y_offset <- y - plmm_output$lasso_output$out_f$f_fit
 

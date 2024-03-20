@@ -20,11 +20,11 @@ plmm_lasso(
 )
 }
 \arguments{
-\item{x}{A matrix of covariates.}
+\item{x}{A matrix of predictor variables.}
 
-\item{y}{A continuous response variable.}
+\item{y}{A continuous vector of response variable.}
 
-\item{series}{A vector representing the random intercept.}
+\item{series}{A variable representing different series or groups in the data modeled as a random intercept.}
 
 \item{t}{A numeric vector indicating the time points.}
 
