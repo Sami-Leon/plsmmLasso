@@ -1,21 +1,19 @@
-#' Debias coefficients estimated from PLMM
+#' Post-selection inference for PLMM
 #'
-#' This function debias the lasso coefficients estimated from a partial longitudinal mixed-effects model (\code{\link{plmm_lasso}}) 
+#' This function debias the lasso coefficients estimated from the \code{\link{plmm_lasso}} function 
 #' and computes p-values.
 #' 
 #' @param x A matrix of predictor variables.
 #' @param y A continuous vector of response variable.
 #' @param series A variable representing different series or groups in the data modeled as a random intercept.
-#' @param plmm_output Output object obtained from the (\code{\link{plmm_lasso}}) function.
-#' @param a Scaling parameter (default is 1). Adjusts the influence of the regularization term on the debiasing process.
-#' @param Z (Optional) Pre-computed score matrix. If provided, it will be used directly for debiasing.
+#' @param plmm_output Output object obtained from the \code{\link{plmm_lasso}} function.
+#' @param a A scalar that adjusts the variance of the random intercept \eqn{\phi} by \eqn{a \times \sigma_{\phi}}, default is 1.
+#' @param Z (Optional) Pre-computed correction score matrix. If provided, it will be used directly for debiasing.
 #' 
 #' @return A data frame containing debiased coefficients, standard errors, confidence intervals, and p-values.
 #' 
-#' @details The function \code{debias_plmm} computes a debiased estimate of the coefficients obtained from the penalized 
-#' longitudinal mixed-effects model. It involves two main steps:
-#' 1. Calculating a debiasing matrix based on the residual score matrix obtained from the initial model estimation.
-#' 2. Adjusting the original coefficients using the debiasing matrix.
+#' @details The original data is decorrelated, and a correction score matrix is computed. The correction scores are a measure of correlation between the predictors in the data.
+#' The debiasing process utilizes these scores to compute debiased estimates of the coefficients, along with associated p-values.
 #' 
 #' @examples
 #' \dontrun{

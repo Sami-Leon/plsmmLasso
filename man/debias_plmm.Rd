@@ -2,7 +2,7 @@
 % Please edit documentation in R/posi.R
 \name{debias_plmm}
 \alias{debias_plmm}
-\title{Debias coefficients estimated from PLMM}
+\title{Post-selection inference for PLMM}
 \usage{
 debias_plmm(x, y, series, plmm_output, a = 1, Z = NULL)
 }
@@ -13,26 +13,22 @@ debias_plmm(x, y, series, plmm_output, a = 1, Z = NULL)
 
 \item{series}{A variable representing different series or groups in the data modeled as a random intercept.}
 
-\item{plmm_output}{Output object obtained from the (\code{\link{plmm_lasso}}) function.}
+\item{plmm_output}{Output object obtained from the \code{\link{plmm_lasso}} function.}
 
-\item{a}{Scaling parameter (default is 1). Adjusts the influence of the regularization term on the debiasing process.}
+\item{a}{A scalar that adjusts the variance of the random intercept \eqn{\phi} by \eqn{a \times \sigma_{\phi}}, default is 1.}
 
-\item{Z}{(Optional) Pre-computed score matrix. If provided, it will be used directly for debiasing.}
+\item{Z}{(Optional) Pre-computed correction score matrix. If provided, it will be used directly for debiasing.}
 }
 \value{
 A data frame containing debiased coefficients, standard errors, confidence intervals, and p-values.
 }
 \description{
-This function debias the lasso coefficients estimated from a partial longitudinal mixed-effects model (\code{\link{plmm_lasso}})
+This function debias the lasso coefficients estimated from the \code{\link{plmm_lasso}} function
 and computes p-values.
 }
 \details{
-The function \code{debias_plmm} computes a debiased estimate of the coefficients obtained from the penalized
-longitudinal mixed-effects model. It involves two main steps:
-\enumerate{
-\item Calculating a debiasing matrix based on the residual score matrix obtained from the initial model estimation.
-\item Adjusting the original coefficients using the debiasing matrix.
-}
+The original data is decorrelated, and a correction score matrix is computed. The correction scores are a measure of correlation between the predictors in the data.
+The debiasing process utilizes these scores to compute debiased estimates of the coefficients, along with associated p-values.
 }
 \examples{
 \dontrun{
