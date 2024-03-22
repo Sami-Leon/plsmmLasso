@@ -80,10 +80,14 @@ f_predict = function(t, coef, group, keep = NULL) {
   
   bases = create_bases(t, keep = keep)$bases
   
-  if(group == 0) {
-    coef = coef[1:ncol(bases)]
+  if(length(coef) == ncol(bases) | is.null(group)) {
+    return(bases %*% coef)
   } else {
-    coef = coef[(ncol(bases)+1):length(coef)]
+    if(group == 0) {
+      coef = coef[1:ncol(bases)]
+    } else {
+      coef = coef[(ncol(bases)+1):length(coef)]
+    }
   }
   
   return(bases %*% coef)
@@ -147,31 +151,6 @@ create_CI <- function(list_diff_CI, data, min_lambda) {
   rownames(CI_diff_f) <- NULL
 
   return(CI_diff_f)
-}
-
-fit_n_boot <- function(x, y, series, t, name_group_var, plmm_output, n_boot = 1000) {
-  y <- y - plmm_output$lasso_output$x_fit - rep(plmm_output$out_phi$phi, plmm_output$ni)
-  
-  t_obs <- sort(unique(t))
-  
-  data <- data.frame(y, series, t, x[, name_group_var])
-  colnames(data)[4] <- "group"
-  
-  samples <- sample_boot(data = data, n_boot = n_boot)
-  
-  pb <- utils::txtProgressBar(min = 0, max = length(samples), style = 3)
-  
-  min_lambda <- scalreg::scalreg(scale(create_bases_boot(data)), scale(data$y))$hsigma
-  
-  fitted_boot <- vector("list", n_boot)
-  
-  for (k in 1:n_boot) {
-    fitted_boot[[k]] <- fit_boot(data = samples[[k]], min_lambda = min_lambda)
-    
-    utils::setTxtProgressBar(pb, k)
-  }
-  
-  return(fitted_boot)
 }
 
 L2_test_f <- function(list_fitted_boot, plmm_output) {
@@ -260,6 +239,19 @@ L2_test_f <- function(list_fitted_boot, plmm_output) {
 #' @export
 test_f <- function(x, y, series, t, name_group_var, plmm_output, n_boot = 1000,
                    predicted = FALSE) {
+
+  f0 <- plmm_output$lasso_output$out_f[plmm_output$lasso_output$out_f$group == 0, ]
+  f0 <- f0[!duplicated(f0$t), ]
+  f0 <- f0[order(f0$t), ]
+
+  f1 <- plmm_output$lasso_output$out_f[plmm_output$lasso_output$out_f$group == 1, ]
+  f1 <- f1[!duplicated(f1$t), ]
+  f1 <- f1[order(f1$t), ]
+
+  if (identical(f1$f_fit, f0$f_fit)) {
+    stop("The nonlinear functions are equal in the plmm_output. The test is irrelevant in this case. Try running plmm_lasso with timexgroup = TRUE")
+  }
+  
   y <- y - plmm_output$lasso_output$x_fit - rep(plmm_output$out_phi$phi, plmm_output$ni)
 
   t_obs <- sort(unique(t))

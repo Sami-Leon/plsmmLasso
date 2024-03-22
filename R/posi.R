@@ -35,7 +35,7 @@
 #'   gamma = gamma, lambda = lambda, timexgroup = TRUE,
 #'   criterion = "BIC"
 #' )
-#'debias_plmm(x, y, series, plmm_output)
+#' debias_plmm(x, y, series, plmm_output)
 #' 
 #' 
 #' @export

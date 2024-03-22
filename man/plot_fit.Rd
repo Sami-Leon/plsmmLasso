@@ -4,15 +4,7 @@
 \alias{plot_fit}
 \title{Visualization of estimated mean trajectories and nonlinear functions from a PLMM}
 \usage{
-plot_fit(
-  x,
-  y,
-  series,
-  t,
-  name_group_var = "group",
-  plmm_output,
-  predicted = FALSE
-)
+plot_fit(x, y, series, t, name_group_var, plmm_output, predicted = FALSE)
 }
 \arguments{
 \item{x}{A matrix of predictors.}

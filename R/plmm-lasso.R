@@ -81,7 +81,7 @@ offset_random_effects <- function(y, phi, ni) {
 }
 
 joint_lasso <- function(x, y, t, name_group_var, bases, se, gamma,
-                        lambda, pre_D) {
+                        lambda, pre_D, timexgroup) {
   x_stand <- scale(x, scale = TRUE)
 
   x_mean <- attr(x_stand, "scaled:center")
@@ -97,8 +97,12 @@ joint_lasso <- function(x, y, t, name_group_var, bases, se, gamma,
   pM <- p + M
 
   D <- diag(1, nrow = pM, ncol = pM)
-
-  D[(p + 1):pM, (p + 1):pM] <- pre_D * (sqrt(se * gamma * log(M / 2)) / lambda)
+  
+  if(!timexgroup | is.null(name_group_var)) {
+    D[(p + 1):pM, (p + 1):pM] <- pre_D * (sqrt(se * gamma * log(M)) / lambda)
+  } else {
+    D[(p + 1):pM, (p + 1):pM] <- pre_D * (sqrt(se * gamma * log(M / 2)) / lambda)
+  }
 
   D_inv <- D
   diag(D_inv) <- 1 / diag(D_inv)
@@ -185,7 +189,8 @@ joint_lasso <- function(x, y, t, name_group_var, bases, se, gamma,
 #'
 #' The model includes a random intercept for each level of the variable specified by \code{series}. Additionally, if \code{timexgroup} is
 #' set to \code{TRUE}, the model includes a time-by-group interaction, allowing each group of \code{name_group_var} to have its own estimate
-#' of the nonlinear function, which can capture group-specific nonlinearities over time.
+#' of the nonlinear function, which can capture group-specific nonlinearities over time. If \code{name_group_var} is set to \code{NULL} only
+#' one nonlinear function for the whole data is being used. 
 #'
 #' The algorithm iteratively updates the estimates until convergence or until the maximum number of iterations is reached.
 #'
@@ -232,7 +237,7 @@ joint_lasso <- function(x, y, t, name_group_var, bases, se, gamma,
 #' # series specific random intercept
 #' plmm_output$out_phi
 #' @export
-plmm_lasso <- function(x, y, series, t, name_group_var, bases,
+plmm_lasso <- function(x, y, series, t, name_group_var = NULL, bases,
                        gamma, lambda, timexgroup, criterion, cvg_tol = 0.001,
                        max_iter = 100, verbose = FALSE) {
   # Check if x is a matrix
@@ -250,19 +255,21 @@ plmm_lasso <- function(x, y, series, t, name_group_var, bases,
     stop("Argument 't' must be a numerical vector.")
   }
 
-  # Check if name_group_var is a character
-  if (!is.character(name_group_var)) {
-    stop("Argument 'name_group_var' must be a character.")
-  }
-
-  # Check if name_group_var is present in column names of x
-  if (!(name_group_var %in% colnames(x))) {
-    stop("The variable specified in 'name_group_var' is not present as a column name in 'x'.")
-  }
-
-  # Check if x[, name_group_var] is a 0,1 binary vector
-  if (any(x[, name_group_var] != 0 & x[, name_group_var] != 1)) {
-    stop("The column specified by 'name_group_var' in 'x' must be a 0,1 binary vector.")
+  if(!is.null(name_group_var)) {
+    # Check if name_group_var is a character
+    if (!is.character(name_group_var)) {
+      stop("Argument 'name_group_var' must be a character.")
+    }
+    
+    # Check if name_group_var is present in column names of x
+    if (!(name_group_var %in% colnames(x))) {
+      stop("The variable specified in 'name_group_var' is not present as a column name in 'x'.")
+    }
+    
+    # Check if x[, name_group_var] is a 0,1 binary vector
+    if (any(x[, name_group_var] != 0 & x[, name_group_var] != 1)) {
+      stop("The column specified by 'name_group_var' in 'x' must be a 0,1 binary vector.")
+    } 
   }
 
   # Check if bases is a matrix
@@ -270,6 +277,11 @@ plmm_lasso <- function(x, y, series, t, name_group_var, bases,
     stop("Argument 'bases' must be a matrix.")
   }
 
+  if(is.null(name_group_var) & timexgroup) {
+    warning("timexgroup has been set to FALSE. timexgroup cannot be TRUE if name_group_var is not provided.")
+    timexgroup = FALSE
+  }
+  
   ni <- as.vector(table(series))
 
   if (timexgroup) {
@@ -302,7 +314,7 @@ plmm_lasso <- function(x, y, series, t, name_group_var, bases,
   lasso_init <- joint_lasso(
     x = x, y = y, t = t, name_group_var = name_group_var,
     bases = bases, se = se, gamma = gamma, lambda = lambda,
-    pre_D = pre_D
+    pre_D = pre_D, timexgroup = timexgroup
   )
 
   out_f <- lasso_init$out_f
@@ -338,7 +350,7 @@ plmm_lasso <- function(x, y, series, t, name_group_var, bases,
     lasso_output <- joint_lasso(
       x = x, y = y_offset, t = t, name_group_var = name_group_var,
       bases = bases, se = se, gamma = gamma, lambda = lambda,
-      pre_D = pre_D
+      pre_D = pre_D, timexgroup = timexgroup
     )
 
     out_f_tmp <- lasso_output$out_f
@@ -391,21 +403,29 @@ plmm_lasso <- function(x, y, series, t, name_group_var, bases,
     }
   }
 
-  group_0 <- lasso_output$out_f$group == 0
-
-  f0_mean <- attr(scale(unique(lasso_output$out_f[group_0, ]$f_fit),
-    scale = FALSE
-  ), "scaled:center")
-  f1_mean <- attr(scale(unique(lasso_output$out_f[!group_0, ]$f_fit),
-    scale = FALSE
-  ), "scaled:center")
-
-  lasso_output$out_f[group_0, ]$f_fit <- lasso_output$out_f[group_0, ]$f_fit - f0_mean
-  lasso_output$out_f[!group_0, ]$f_fit <- lasso_output$out_f[!group_0, ]$f_fit - f1_mean
-
-  lasso_output$theta[name_group_var] <- lasso_output$theta[name_group_var] + (f1_mean - f0_mean)
-  lasso_output$theta["Intercept"] <- lasso_output$theta["Intercept"] + f0_mean
-  lasso_output$x_fit <- as.matrix(cbind(1, x)) %*% lasso_output$theta
+  if(is.null(name_group_var)) {
+    f_mean = mean(unique(plmm_output$lasso_output$out_f$f_fit))
+    lasso_output$out_f$f_fit <- lasso_output$out_f$f_fit - f_mean
+    lasso_output$theta["Intercept"] <- lasso_output$theta["Intercept"] + f_mean
+    lasso_output$x_fit <- as.matrix(cbind(1, x)) %*% lasso_output$theta
+  } else {
+    group_0 <- lasso_output$out_f$group == 0
+    
+    f0_mean <- attr(scale(unique(lasso_output$out_f[group_0, ]$f_fit),
+                          scale = FALSE
+    ), "scaled:center")
+    f1_mean <- attr(scale(unique(lasso_output$out_f[!group_0, ]$f_fit),
+                          scale = FALSE
+    ), "scaled:center")
+    
+    lasso_output$out_f[group_0, ]$f_fit <- lasso_output$out_f[group_0, ]$f_fit - f0_mean
+    lasso_output$out_f[!group_0, ]$f_fit <- lasso_output$out_f[!group_0, ]$f_fit - f1_mean
+    
+    lasso_output$theta[name_group_var] <- lasso_output$theta[name_group_var] + (f1_mean - f0_mean)
+    lasso_output$theta["Intercept"] <- lasso_output$theta["Intercept"] + f0_mean
+    lasso_output$x_fit <- as.matrix(cbind(1, x)) %*% lasso_output$theta
+  }
+  
 
   hyperparameters <- data.frame(lambda = lambda, gamma = gamma)
   converged <- ifelse(Iter >= max_iter, FALSE, TRUE)

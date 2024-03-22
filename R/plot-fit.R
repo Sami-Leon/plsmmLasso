@@ -1,6 +1,6 @@
 #' Visualization of estimated mean trajectories and nonlinear functions from a PLMM
 #'
-#' This function plots the observed data, the estimated mean trajectories, and 
+#' This function plots the observed data, the estimated mean trajectories, and
 #' the estimated nonlinear functions from the output of \code{\link{plmm_lasso}}.
 #'
 #' @param x A matrix of predictors.
@@ -19,7 +19,7 @@
 #' If \code{predicted} is \code{TRUE} the function uses the model from \code{plmm_output} to predict unobserved time points on a continuous grid of time.
 #'
 #' @examples
-#' 
+#'
 #' set.seed(123)
 #' data_sim <- simulate_group_inter(
 #'   N = 50, n_mvnorm = 3, grouped = TRUE,
@@ -41,88 +41,109 @@
 #'   criterion = "BIC"
 #' )
 #' plot_fit(x, y, series, t, name_group_var = "group", plmm_output)
-#' 
+#'
 #' @importFrom rlang .data
 #' @export
-plot_fit <- function(x, y, series, t,  name_group_var = "group", 
+plot_fit <- function(x, y, series, t, name_group_var,
                      plmm_output, predicted = FALSE) {
   data <- data.frame(y, series, t, x)
-  
+
   data$f_fit <- plmm_output$lasso_output$out_f$f_fit
   data$x_fit <- plmm_output$lasso_output$x_fit
   data$phi <- rep(plmm_output$out_phi$phi, table(data$series))
-  
+
   bases_functions <- create_bases(t)
-  
-  t_obs = sort(unique(t))
-  
+
+  t_obs <- sort(unique(t))
+
   t_cont <- seq(min(t_obs), max(t_obs), by = 0.1)
-  
-  predicted_f <- data.frame(c(t_cont, t_cont),
-                            c(f_predict(
-                              t = t_cont,
-                              coef = plmm_output$lasso_output$alpha, group = plmm_output$lasso_output$out_f$group[1],
-                              keep = bases_functions$selected_bases
-                            ) - mean(f_predict(
-                              t = t_obs,
-                              coef = plmm_output$lasso_output$alpha, group = plmm_output$lasso_output$out_f$group[1],
-                              keep = bases_functions$selected_bases
-                            )), f_predict(
-                              t = t_cont,
-                              coef = plmm_output$lasso_output$alpha, group = 1 - plmm_output$lasso_output$out_f$group[1],
-                              keep = bases_functions$selected_bases
-                            ) - mean(f_predict(
-                              t = t_obs,
-                              coef = plmm_output$lasso_output$alpha, group = 1 - plmm_output$lasso_output$out_f$group[1],
-                              keep = bases_functions$selected_bases
-                            ))),
-                            c(rep(0, length(t_cont)), rep(1, length(t_cont)))
+
+  predicted_f <- data.frame(
+    c(t_cont, t_cont),
+    c(f_predict(
+      t = t_cont,
+      coef = plmm_output$lasso_output$alpha, group = plmm_output$lasso_output$out_f$group[1],
+      keep = bases_functions$selected_bases
+    ) - mean(f_predict(
+      t = t_obs,
+      coef = plmm_output$lasso_output$alpha, group = plmm_output$lasso_output$out_f$group[1],
+      keep = bases_functions$selected_bases
+    )), f_predict(
+      t = t_cont,
+      coef = plmm_output$lasso_output$alpha, group = 1 - plmm_output$lasso_output$out_f$group[1],
+      keep = bases_functions$selected_bases
+    ) - mean(f_predict(
+      t = t_obs,
+      coef = plmm_output$lasso_output$alpha, group = 1 - plmm_output$lasso_output$out_f$group[1],
+      keep = bases_functions$selected_bases
+    ))),
+    c(rep(0, length(t_cont)), rep(1, length(t_cont)))
   )
-  
+
   colnames(predicted_f) <- c("t", "f_cont", "group")
-  
-  means <- stats::aggregate(cbind(phi, x_fit) ~ group, data = data, FUN = mean)
-  names(means) <- c("group", "phi", "x_fit")
-  
-  predicted_f <- merge(predicted_f, means, by = "group")
-  
-  predicted_f$mean_trajectories <- predicted_f$f_cont + predicted_f$x_fit + predicted_f$phi
-  
-  obs_f = predicted_f[predicted_f$t %in% t_obs, ]
-  
+
+  means <- stats::aggregate(cbind(phi, x_fit) ~ .,
+    data = data[, c("phi", "x_fit", name_group_var)],
+    FUN = mean
+  )
+  if(is.null(name_group_var)) {
+    names(means) <- c("phi", "x_fit")
+    predicted_f$mean_trajectories <- predicted_f$f_cont + means$x_fit + means$phi
+  } else {
+    names(means) <- c("group", "phi", "x_fit")
+    predicted_f <- merge(predicted_f, means, by = "group")
+    predicted_f$mean_trajectories <- predicted_f$f_cont + predicted_f$x_fit + predicted_f$phi
+  }
+
+  obs_f <- predicted_f[predicted_f$t %in% t_obs, ]
+
   p <- ggplot2::ggplot(data = data, ggplot2::aes(x = t, y = y))
-  
-  if(predicted) {
+
+  if (predicted) {
     p.F.overall <- p + ggplot2::geom_line(ggplot2::aes(x = t, y = y, group = series)) +
-      ggplot2::geom_line(ggplot2::aes(x = t, y = .data$mean_trajectories), data = predicted_f, size = 1,
-                         col = "red") +
-      ggplot2::facet_grid(. ~ group) + ggplot2::geom_point(ggplot2::aes(x = t, y = .data$mean_trajectories), 
-                                                           data = obs_f, size = 2,
-                                                           col = "red") +
+      ggplot2::geom_line(ggplot2::aes(x = t, y = .data$mean_trajectories),
+        data = predicted_f, size = 1,
+        col = "red"
+      ) + ggplot2::geom_point(ggplot2::aes(x = t, y = .data$mean_trajectories),
+        data = obs_f, size = 2,
+        col = "red"
+      ) +
       ggplot2::scale_x_continuous(breaks = t_obs)
-    
+
     p.F <- ggplot2::ggplot(ggplot2::aes(x = t, y = .data$f_cont), data = predicted_f) +
       ggplot2::geom_line(size = 1, col = "red") +
-      ggplot2::facet_grid(. ~ group) +
       ggplot2::geom_point(ggplot2::aes(x = t, y = .data$f_cont),
-                          data = obs_f, size = 2, col = "red") +
+        data = obs_f, size = 2, col = "red"
+      ) +
       ggplot2::scale_x_continuous(breaks = t_obs)
+    
+    if(!is.null(name_group_var)) {
+      p.F.overall = p.F.overall + ggplot2::facet_grid(. ~ group)
+      p.F = p.F + ggplot2::facet_grid(. ~ group)
+      }
+    
   } else {
     p.F.overall <- p + ggplot2::geom_line(ggplot2::aes(x = t, y = y, group = series)) +
-      ggplot2::geom_line(ggplot2::aes(x = t, y = .data$mean_trajectories), data = obs_f, size = 1,
-                         col = "red") +
-      ggplot2::geom_point(ggplot2::aes(x = t, y = .data$mean_trajectories), 
-                          data = obs_f, size = 2, col = "red") +
-      ggplot2::facet_grid(. ~ group) + 
-      ggplot2::scale_x_continuous(breaks = t_obs) 
-    
+      ggplot2::geom_line(ggplot2::aes(x = t, y = .data$mean_trajectories),
+        data = obs_f, size = 1,
+        col = "red"
+      ) +
+      ggplot2::geom_point(ggplot2::aes(x = t, y = .data$mean_trajectories),
+        data = obs_f, size = 2, col = "red"
+      ) +
+      ggplot2::scale_x_continuous(breaks = t_obs)
+
     p.F <- ggplot2::ggplot(ggplot2::aes(x = t, y = .data$f_cont), data = obs_f) +
       ggplot2::geom_line(size = 1, col = "red") +
-      ggplot2::facet_grid(. ~ group) +
       ggplot2::geom_point(size = 2, col = "red") +
-      ggplot2::scale_x_continuous(breaks = t_obs) 
+      ggplot2::scale_x_continuous(breaks = t_obs)
+    
+    if(!is.null(name_group_var)) {
+      p.F.overall = p.F.overall + ggplot2::facet_grid(. ~ group)
+      p.F = p.F + ggplot2::facet_grid(. ~ group)
+    }
   }
-  
+
   print(p.F.overall)
   print(p.F)
 }
