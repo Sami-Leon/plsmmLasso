@@ -404,7 +404,7 @@ plmm_lasso <- function(x, y, series, t, name_group_var = NULL, bases,
   }
 
   if(is.null(name_group_var)) {
-    f_mean = mean(unique(plmm_output$lasso_output$out_f$f_fit))
+    f_mean = mean(unique(lasso_output$out_f$f_fit))
     lasso_output$out_f$f_fit <- lasso_output$out_f$f_fit - f_mean
     lasso_output$theta["Intercept"] <- lasso_output$theta["Intercept"] + f_mean
     lasso_output$x_fit <- as.matrix(cbind(1, x)) %*% lasso_output$theta

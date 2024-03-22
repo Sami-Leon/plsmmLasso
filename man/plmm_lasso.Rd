@@ -9,7 +9,7 @@ plmm_lasso(
   y,
   series,
   t,
-  name_group_var,
+  name_group_var = NULL,
   bases,
   gamma,
   lambda,
@@ -69,7 +69,8 @@ for estimation. The bases functions represent a nonlinear effect of time.
 
 The model includes a random intercept for each level of the variable specified by \code{series}. Additionally, if \code{timexgroup} is
 set to \code{TRUE}, the model includes a time-by-group interaction, allowing each group of \code{name_group_var} to have its own estimate
-of the nonlinear function, which can capture group-specific nonlinearities over time.
+of the nonlinear function, which can capture group-specific nonlinearities over time. If \code{name_group_var} is set to \code{NULL} only
+one nonlinear function for the whole data is being used.
 
 The algorithm iteratively updates the estimates until convergence or until the maximum number of iterations is reached.
 }
