@@ -48,7 +48,7 @@ The function generate bootstrap samples and estimate the nonlinear functions for
 These bootstrap estimates are then used to compute the L2-norm test of equality and the joint confidence bands.
 }
 \examples{
-\dontrun{
+
 set.seed(123)
 data_sim <- simulate_group_inter(
   N = 50, n_mvnorm = 3, grouped = TRUE,
@@ -69,7 +69,12 @@ plmm_output <- plmm_lasso(x, y, series, t,
   gamma = gamma, lambda = lambda, timexgroup = TRUE,
   criterion = "BIC"
 )
-test_f(x, y, series, t, name_group_var = "group", plmm_output)
-}
+test_f_results <- test_f(x, y, series, t,
+ name_group_var = "group", plmm_output,
+ n_boot = 10
+)
+test_f_results[[1]]
+test_f_results[[2]]
+
 
 }

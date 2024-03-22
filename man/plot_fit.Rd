@@ -44,7 +44,7 @@ the estimated nonlinear functions from the output of \code{\link{plmm_lasso}}.
 If \code{predicted} is \code{TRUE} the function uses the model from \code{plmm_output} to predict unobserved time points on a continuous grid of time.
 }
 \examples{
-\dontrun{
+
 set.seed(123)
 data_sim <- simulate_group_inter(
   N = 50, n_mvnorm = 3, grouped = TRUE,
@@ -66,5 +66,5 @@ plmm_output <- plmm_lasso(x, y, series, t,
   criterion = "BIC"
 )
 plot_fit(x, y, series, t, name_group_var = "group", plmm_output)
-}
+
 }

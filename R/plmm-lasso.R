@@ -190,7 +190,7 @@ joint_lasso <- function(x, y, t, name_group_var, bases, se, gamma,
 #' The algorithm iteratively updates the estimates until convergence or until the maximum number of iterations is reached.
 #'
 #' @examples
-#' \dontrun{
+#' 
 #' set.seed(123)
 #' data_sim <- simulate_group_inter(
 #'   N = 50, n_mvnorm = 3, grouped = TRUE,
@@ -211,8 +211,26 @@ joint_lasso <- function(x, y, t, name_group_var, bases, se, gamma,
 #'   gamma = gamma, lambda = lambda, timexgroup = TRUE,
 #'   criterion = "BIC"
 #' )
-#' }
+#' # fixed effect coefficients
+#' plmm_output$lasso_output$theta
+#' 
+#' # fixed effect fitted values
+#' plmm_output$lasso_output$x_fit
+#' 
+#' # nonlinear functions coefficients
+#' plmm_output$lasso_output$alpha
 #'
+#'# nonlinear functions fitted values
+#'plmm_output$lasso_output$out_f
+#'
+#' # standard deviation of residuals
+#' plmm_output$se
+#' 
+#' # standard deviation of random intercept
+#' plmm_output$su
+#' 
+#' # series specific random intercept
+#' plmm_output$out_phi
 #' @export
 plmm_lasso <- function(x, y, series, t, name_group_var, bases,
                        gamma, lambda, timexgroup, criterion, cvg_tol = 0.001,

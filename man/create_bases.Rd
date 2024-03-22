@@ -30,8 +30,9 @@ Polynomial basis functions are constructed with degrees ranging from 0.1 to 2, i
 \examples{
 t <- seq(0, 10, by = 0.5)
 bases <- create_bases(t)
-selected_bases <- create_bases(t, keep = c(1, 3, 5))
-
+selected_bases <- create_bases(t)
+selected_bases[[1]]
+selected_bases[[2]]
 }
 \seealso{
 \code{\link{filter_nonzero_bases}}

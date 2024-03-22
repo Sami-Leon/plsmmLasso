@@ -16,7 +16,7 @@
 #' The debiasing process utilizes these scores to compute debiased estimates of the coefficients, along with associated p-values.
 #' 
 #' @examples
-#' \dontrun{
+#' 
 #' set.seed(123)
 #' data_sim = simulate_group_inter(N = 50, n_mvnorm = 3, grouped = TRUE,
 #'                                 timepoints = 3:5, nonpara_inter = TRUE,
@@ -30,11 +30,13 @@
 #' bases = create_bases(t)
 #' lambda <- 0.0046
 #' gamma <- 0.00000001
-#'plmm_output = plmm_lasso(x, y, series, t, name_group_var = "group", bases$bases,
-#'                         gamma = gamma, lambda = lambda, timexgroup = TRUE,
-#'                         criterion = "BIC")
-#' debias_plmm(x, y, series, plmm_output)                       
-#' }
+#' plmm_output <- plmm_lasso(x, y, series, t,
+#'   name_group_var = "group", bases$bases,
+#'   gamma = gamma, lambda = lambda, timexgroup = TRUE,
+#'   criterion = "BIC"
+#' )
+#'debias_plmm(x, y, series, plmm_output)
+#' 
 #' 
 #' @export
 debias_plmm <- function(x, y, series, plmm_output, a = 1, Z = NULL) {

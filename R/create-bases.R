@@ -21,8 +21,9 @@
 #' @examples
 #' t <- seq(0, 10, by = 0.5)
 #' bases <- create_bases(t)
-#' selected_bases <- create_bases(t, keep = c(1, 3, 5))
-#'
+#' selected_bases <- create_bases(t)
+#' selected_bases[[1]]
+#' selected_bases[[2]]
 #' @export
 create_bases <- function(t, keep = NULL) {
   max_t <- max(t)

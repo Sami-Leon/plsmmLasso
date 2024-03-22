@@ -42,9 +42,11 @@ A list with three components:
 Simulate a partial linear mixed-effects model.
 }
 \examples{
-\dontrun{
-simulate_group_inter(N = 50, n_mvnorm = 100, grouped = TRUE,
-                     timepoints = 3:5, nonpara_inter = TRUE,
-                     sample_from = seq(0, 10, by = 0.1), cos = FALSE, A_vec = c(1, 1.5))
-}
+
+simulate_group_inter(
+  N = 50, n_mvnorm = 100, grouped = TRUE,
+  timepoints = 3:5, nonpara_inter = TRUE,
+  sample_from = seq(0, 10, by = 0.1), cos = FALSE, A_vec = c(1, 1.5)
+)
+
 }

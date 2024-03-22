@@ -226,7 +226,7 @@ L2_test_f <- function(list_fitted_boot, plmm_output) {
 #' These bootstrap estimates are then used to compute the L2-norm test of equality and the joint confidence bands.
 #'
 #' @examples
-#' \dontrun{
+#' 
 #' set.seed(123)
 #' data_sim <- simulate_group_inter(
 #'   N = 50, n_mvnorm = 3, grouped = TRUE,
@@ -247,8 +247,14 @@ L2_test_f <- function(list_fitted_boot, plmm_output) {
 #'   gamma = gamma, lambda = lambda, timexgroup = TRUE,
 #'   criterion = "BIC"
 #' )
-#' test_f(x, y, series, t, name_group_var = "group", plmm_output)
-#' }
+# Note: For illustration purposes only, set n_boot to at least 1000 for reliable results.
+#'test_f_results <- test_f(x, y, series, t,
+#'  name_group_var = "group", plmm_output,
+#'  n_boot = 10
+#')
+#' test_f_results[[1]]
+#' test_f_results[[2]]
+#' 
 #'
 #' @importFrom rlang .data
 #' @export

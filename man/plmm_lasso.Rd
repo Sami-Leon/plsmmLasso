@@ -74,7 +74,7 @@ of the nonlinear function, which can capture group-specific nonlinearities over 
 The algorithm iteratively updates the estimates until convergence or until the maximum number of iterations is reached.
 }
 \examples{
-\dontrun{
+
 set.seed(123)
 data_sim <- simulate_group_inter(
   N = 50, n_mvnorm = 3, grouped = TRUE,
@@ -95,6 +95,24 @@ plmm_output <- plmm_lasso(x, y, series, t,
   gamma = gamma, lambda = lambda, timexgroup = TRUE,
   criterion = "BIC"
 )
-}
+# fixed effect coefficients
+plmm_output$lasso_output$theta
 
+# fixed effect fitted values
+plmm_output$lasso_output$x_fit
+
+# nonlinear functions coefficients
+plmm_output$lasso_output$alpha
+
+# nonlinear functions fitted values
+plmm_output$lasso_output$out_f
+
+# standard deviation of residuals
+plmm_output$se
+
+# standard deviation of random intercept
+plmm_output$su
+
+# series specific random intercept
+plmm_output$out_phi
 }
