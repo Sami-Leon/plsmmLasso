@@ -115,20 +115,53 @@ simulate_group_inter <- function(N = 50, n_mvnorm = 100, grouped = TRUE,
   return(list(sim = sim, phi = phi, f_val = f_val))
 }
 
-f_predict = function(t, coef, group, keep = NULL) {
-  
-  bases = create_bases(t, keep = keep)$bases
-  
-  if(group == 0) {
-    coef = coef[1:ncol(bases)]
-  } else {
-    coef = coef[(ncol(bases)+1):length(coef)]
-  }
-  
-  return(bases %*% coef)
-  
-}
-
+#' Visualization of estimated mean trajectories and nonlinear functions from a PLMM
+#'
+#' This function plots the observed data, the estimated mean trajectories, and 
+#' the estimated nonlinear functions from the output of \code{\link{plmm_lasso}}.
+#'
+#' @param x A matrix of predictors.
+#' @param y A continuous vector of response variable.
+#' @param series A variable representing different series or groups in the data modeled as a random intercept.
+#' @param t A numeric vector indicating the time points.
+#' @param name_group_var A character string specifying the name of the grouping variable.
+#' @param plmm_output Output object obtained from the \code{\link{plmm_lasso}} function.
+#' @param predicted Logical indicating whether to plot predicted values. If \code{FALSE} only the observed time points are used.
+#'
+#' @return Two plots:
+#'   - The first plot shows the observed data and the estimated mean trajectories.
+#'   - The second plot shows the estimated nonlinear functions.
+#'
+#' @details
+#' If \code{predicted} is \code{TRUE} the function uses the model from \code{plmm_output} to predict unobserved time points on a continuous grid of time.
+#'
+#' @examples
+#' \dontrun{
+#' # Generate example data
+#' set.seed(123)
+#' data_sim <- simulate_group_inter(
+#'   N = 50, n_mvnorm = 3, grouped = TRUE,
+#'   timepoints = 3:5, nonpara_inter = TRUE,
+#'   sample_from = seq(0, 52, 13), cst_ni = FALSE,
+#'   cos = FALSE, A_vec = c(1, 1.5)
+#' )
+#' sim <- data_sim$sim
+#' x <- as.matrix(sim[, -1:-3])
+#' y <- sim$y
+#' series <- sim$series
+#' t <- sim$t
+#' bases <- create_bases(t)
+#' lambda <- 0.0046
+#' gamma <- 0.00000001
+#' plmm_output <- plmm_lasso(x, y, series, t,
+#'   name_group_var = "group", bases$bases,
+#'   gamma = gamma, lambda = lambda, timexgroup = TRUE,
+#'   criterion = "BIC"
+#' )
+#' plot_fit(x, y, series, t, name_group_var = "group", plmm_output)
+#' }
+#'
+#' @export
 plot_fit <- function(x, y, series, t,  name_group_var = "group", 
                      plmm_output, predicted = FALSE) {
   data <- data.frame(y, series, t, x)
@@ -175,39 +208,41 @@ plot_fit <- function(x, y, series, t,  name_group_var = "group",
   
   obs_f = predicted_f[predicted_f$t %in% t_obs, ]
   
-  p <- ggplot2::ggplot(data = data, aes(x = t, y = y))
+  p <- ggplot2::ggplot(data = data, ggplot2::aes(x = t, y = y))
   
   if(predicted) {
-    p.F.overall <- p + geom_line(aes(x = t, y = y, group = series)) +
-      geom_line(aes(x = t, y = mean_trajectories), data = predicted_f, size = 1,
+    p.F.overall <- p + ggplot2::geom_line(ggplot2::aes(x = t, y = y, group = series)) +
+      ggplot2::geom_line(ggplot2::aes(x = t, y = mean_trajectories), data = predicted_f, size = 1,
                 col = "red") +
-      facet_grid(. ~ group) + geom_point(aes(x = t, y = mean_trajectories), 
+      ggplot2::facet_grid(. ~ group) + ggplot2::geom_point(ggplot2::aes(x = t, y = mean_trajectories), 
                                          data = obs_f, size = 2,
                                          col = "red") +
-      scale_x_continuous(breaks = t_obs)
+      ggplot2::scale_x_continuous(breaks = t_obs)
     
-    p.F <- ggplot(aes(x = t, y = f_cont), data = predicted_f) +
-      geom_line(size = 1, col = "red") +
-      facet_grid(. ~ group) +
-      geom_point(aes(x = t, y = f_cont),
+    p.F <- ggplot2::ggplot(ggplot2::aes(x = t, y = f_cont), data = predicted_f) +
+      ggplot2::geom_line(size = 1, col = "red") +
+      ggplot2::facet_grid(. ~ group) +
+      ggplot2::geom_point(ggplot2::aes(x = t, y = f_cont),
                  data = obs_f, size = 2, col = "red") +
-      scale_x_continuous(breaks = t_obs)
+      ggplot2::scale_x_continuous(breaks = t_obs)
   } else {
-    p.F.overall <- p + geom_line(aes(x = t, y = y, group = series)) +
-      geom_line(aes(x = t, y = mean_trajectories), data = obs_f, size = 1,
+    p.F.overall <- p + ggplot2::geom_line(ggplot2::aes(x = t, y = y, group = series)) +
+      ggplot2::geom_line(ggplot2::aes(x = t, y = mean_trajectories), data = obs_f, size = 1,
                 col = "red") +
-      geom_point(aes(x = t, y = mean_trajectories), 
+      ggplot2::geom_point(ggplot2::aes(x = t, y = mean_trajectories), 
                  data = obs_f, size = 2, col = "red") +
-      facet_grid(. ~ group) + 
-      scale_x_continuous(breaks = t_obs)
+      ggplot2::facet_grid(. ~ group) + 
+      ggplot2::scale_x_continuous(breaks = t_obs) +
+      ggplot2::ggtitle("Estimated mean trajectories with observed data")
     
-    p.F <- ggplot(aes(x = t, y = f_cont), data = obs_f) +
-      geom_line(size = 1, col = "red") +
-      facet_grid(. ~ group) +
-      geom_point(size = 2, col = "red") +
-      scale_x_continuous(breaks = t_obs)
+    p.F <- ggplot2::ggplot(ggplot2::aes(x = t, y = f_cont), data = obs_f) +
+      ggplot2::geom_line(size = 1, col = "red") +
+      ggplot2::facet_grid(. ~ group) +
+      ggplot2::geom_point(size = 2, col = "red") +
+      ggplot2::scale_x_continuous(breaks = t_obs) +
+      ggtitle("Estimated nonlinear functions")
   }
   
-  ggarrange(p.F.overall, p.F, ncol = 1, nrow = 2, common.legend = TRUE, 
-            legend = "bottom")
+  print(p.F.overall)
+  print(p.F)
 }

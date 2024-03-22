@@ -32,7 +32,7 @@ init_params <- function(y, series) {
 }
 
 E_step <- function(x, y, series, f_fit, sr, ni, theta) {
-  x = cbind(1, x)
+  x <- cbind(1, x)
   res <- data.frame(
     series = series,
     resid = (y - f_fit - x %*% theta)
@@ -52,7 +52,7 @@ E_step <- function(x, y, series, f_fit, sr, ni, theta) {
 }
 
 M_step_standard_error <- function(x, y, f_fit, sr, se, phi, ni, theta) {
-  x = cbind(1, x)
+  x <- cbind(1, x)
   n <- length(y)
 
   rep_phi <- rep(phi, ni)
@@ -108,9 +108,9 @@ joint_lasso <- function(x, y, t, name_group_var, bases, se, gamma,
   y_stand <- scale(y)
   y_mean <- attr(y_stand, "scaled:center")
   y_sd <- attr(y_stand, "scaled:scale")
-  
 
-  
+
+
   coef_joint_lasso <- as.vector(coef(glmnet::glmnet(combined_x_bases_lasso[, -1],
     y_stand,
     alpha = 1, lambda = lambda,
@@ -149,10 +149,10 @@ joint_lasso <- function(x, y, t, name_group_var, bases, se, gamma,
   ))
 }
 
-#' Fit a high-dimensional PLMM 
+#' Fit a high-dimensional PLMM
 #'
 #' Fits a partial linear mixed effects model (PLMM) via penalized maximum likelihood.
-#' 
+#'
 #' @param x A matrix of predictor variables.
 #' @param y A continuous vector of response variable.
 #' @param series A variable representing different series or groups in the data modeled as a random intercept.
@@ -161,12 +161,13 @@ joint_lasso <- function(x, y, t, name_group_var, bases, se, gamma,
 #' @param bases A matrix of bases functions.
 #' @param gamma The regularization parameter for the nonlinear effect of time
 #' @param lambda The regularization parameter for the fixed effects.
-#' @param timexgroup Logical indicating whether to use a time-by-group interaction. 
+#' @param timexgroup Logical indicating whether to use a time-by-group interaction.
 #'                   If \code{TRUE}, each group in \code{name_group_var} will have its own estimate of the time effect.
 #' @param criterion The information criterion to be computed. Options are "BIC", "BICC", or "EBIC".
 #' @param cvg_tol Convergence tolerance for the algorithm.
 #' @param max_iter Maximum number of iterations allowed for convergence.
-#' 
+#' @param verbose Logical indicating whether to print convergence details at each iteration. Default is \code{FALSE}.
+#'
 #' @return A list containing the following components:
 #'   \item{lasso_output}{A list with the fitted values for the fixed effect and nonlinear effect. The estimated coeffcients for the fixed effects and nonlinear effect. The indices of the used bases functions.}
 #'   \item{se}{Estimated standard deviation of the residuals.}
@@ -176,79 +177,82 @@ joint_lasso <- function(x, y, t, name_group_var, bases, se, gamma,
 #'   \item{hyperparameters}{Data frame with lambda and gamma values.}
 #'   \item{converged}{Logical indicating if the algorithm converged.}
 #'   \item{crit}{Value of the selected information criterion.}
-#'   
+#'
 #' @details
-#' This function fits a partial linear mixed effects model with a lasso penalty on the fixed effects 
-#' and the coefficient associated with the bases functions. It uses the Expectation-Maximization (EM) algorithm 
-#' for estimation. The bases functions represent a nonlinear effect of time. 
-#' 
-#' The model includes a random intercept for each level of the variable specified by \code{series}. Additionally, if \code{timexgroup} is 
-#' set to \code{TRUE}, the model includes a time-by-group interaction, allowing each group of \code{name_group_var} to have its own estimate 
+#' This function fits a partial linear mixed effects model with a lasso penalty on the fixed effects
+#' and the coefficient associated with the bases functions. It uses the Expectation-Maximization (EM) algorithm
+#' for estimation. The bases functions represent a nonlinear effect of time.
+#'
+#' The model includes a random intercept for each level of the variable specified by \code{series}. Additionally, if \code{timexgroup} is
+#' set to \code{TRUE}, the model includes a time-by-group interaction, allowing each group of \code{name_group_var} to have its own estimate
 #' of the nonlinear function, which can capture group-specific nonlinearities over time.
-#' 
+#'
 #' The algorithm iteratively updates the estimates until convergence or until the maximum number of iterations is reached.
-#' 
+#'
 #' @examples
 #' \dontrun{
 #' # Generate example data
 #' set.seed(123)
-#' data_sim = simulate_group_inter(N = 50, n_mvnorm = 3, grouped = TRUE,
-#'                                 timepoints = 3:5, nonpara_inter = TRUE,
-#'                                 sample_from = seq(0,52,13), cst_ni = FALSE,
-#'                                 cos = FALSE, A_vec = c(1, 1.5))
-#' sim = data_sim$sim
-#' x = as.matrix(sim[,-1:-3])
-#' y = sim$y
-#' series = sim$series
-#' t = sim$t
-#' bases = create_bases(t)
+#' data_sim <- simulate_group_inter(
+#'   N = 50, n_mvnorm = 3, grouped = TRUE,
+#'   timepoints = 3:5, nonpara_inter = TRUE,
+#'   sample_from = seq(0, 52, 13), cst_ni = FALSE,
+#'   cos = FALSE, A_vec = c(1, 1.5)
+#' )
+#' sim <- data_sim$sim
+#' x <- as.matrix(sim[, -1:-3])
+#' y <- sim$y
+#' series <- sim$series
+#' t <- sim$t
+#' bases <- create_bases(t)
 #' lambda <- 0.0046
 #' gamma <- 0.00000001
-#'plmm_output = plmm_lasso(x, y, series, t, name_group_var = "group", bases$bases,
-#'                         gamma = gamma, lambda = lambda, timexgroup = TRUE,
-#'                         criterion = "BIC")
+#' plmm_output <- plmm_lasso(x, y, series, t,
+#'   name_group_var = "group", bases$bases,
+#'   gamma = gamma, lambda = lambda, timexgroup = TRUE,
+#'   criterion = "BIC"
+#' )
 #' }
-#' 
+#'
 #' @export
 plmm_lasso <- function(x, y, series, t, name_group_var, bases,
-                       gamma, lambda, timexgroup, criterion, cvg_tol = 0.001, 
-                       max_iter = 100) {
-  
+                       gamma, lambda, timexgroup, criterion, cvg_tol = 0.001,
+                       max_iter = 100, verbose = FALSE) {
   # Check if x is a matrix
   if (!is.matrix(x)) {
     stop("Argument 'x' must be a matrix.")
   }
-  
+
   # Check if y is a numerical vector
   if (!is.numeric(y)) {
     stop("Argument 'y' must be a numerical vector.")
   }
-  
+
   # Check if t is a numerical vector
   if (!is.numeric(t)) {
     stop("Argument 't' must be a numerical vector.")
   }
-  
+
   # Check if name_group_var is a character
   if (!is.character(name_group_var)) {
     stop("Argument 'name_group_var' must be a character.")
   }
-  
+
   # Check if name_group_var is present in column names of x
   if (!(name_group_var %in% colnames(x))) {
     stop("The variable specified in 'name_group_var' is not present as a column name in 'x'.")
   }
-  
+
   # Check if x[, name_group_var] is a 0,1 binary vector
   if (any(x[, name_group_var] != 0 & x[, name_group_var] != 1)) {
     stop("The column specified by 'name_group_var' in 'x' must be a 0,1 binary vector.")
   }
-  
+
   # Check if bases is a matrix
   if (!is.matrix(bases)) {
     stop("Argument 'bases' must be a matrix.")
   }
-  
+
   ni <- as.vector(table(series))
 
   if (timexgroup) {
@@ -256,16 +260,16 @@ plmm_lasso <- function(x, y, series, t, name_group_var, bases,
     vec_group <- x[, name_group_var]
     ref_group <- vec_group[1]
     M <- ncol(bases)
-    
+
     index_ref_group <- vec_group == ref_group
 
     bases_timexgroup <- matrix(0, nrow = n, ncol = M * 2)
-    
+
     bases_timexgroup[index_ref_group, 1:M] <- bases[index_ref_group, ]
-    bases_timexgroup[!index_ref_group, (M+1):(2*M)] <- bases[!index_ref_group, ]
-    
+    bases_timexgroup[!index_ref_group, (M + 1):(2 * M)] <- bases[!index_ref_group, ]
+
     bases <- bases_timexgroup
-    
+
     bases <- bases_timexgroup
   }
 
@@ -292,8 +296,8 @@ plmm_lasso <- function(x, y, series, t, name_group_var, bases,
   Iter <- 0
   while ((cvg_crit > cvg_tol) & (Iter < max_iter)) {
     Iter <- Iter + 1
-    
-    f_fit = out_f$f_fit
+
+    f_fit <- out_f$f_fit
 
     out_E <- E_step(
       x = x, y = y, series = series, f_fit = f_fit, sr = sr, ni = ni,
@@ -322,8 +326,8 @@ plmm_lasso <- function(x, y, series, t, name_group_var, bases,
 
     out_f_tmp <- lasso_output$out_f
     theta_tmp <- lasso_output$theta
-    
-    
+
+
 
     delta_f <- 0
     delta_theta <- 0
@@ -360,12 +364,18 @@ plmm_lasso <- function(x, y, series, t, name_group_var, bases,
     out_f <- out_f_tmp
     sr <- sr_tmp
     theta <- theta_tmp
-    
-    cat("Iter ", Iter, cvg_crit, delta_f, delta_theta, delta_se, delta_su, "\n")
+
+    if (verbose) {
+      cat(
+        "Iter ", Iter, "conv_crit", cvg_crit, "\n", 
+        "param_conv:", "f", delta_f, "theta",
+        delta_theta, "se", delta_se, "su", delta_su, "\n"
+      )
+    }
   }
 
-  group_0 = lasso_output$out_f$group == 0
-  
+  group_0 <- lasso_output$out_f$group == 0
+
   f0_mean <- attr(scale(unique(lasso_output$out_f[group_0, ]$f_fit),
     scale = FALSE
   ), "scaled:center")

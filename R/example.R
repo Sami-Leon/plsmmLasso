@@ -1,4 +1,4 @@
-# # Generating simulated dataset
+# # # Generating simulated dataset
 # set.seed(12)
 # data.sim = simulate_group_inter(N = 50, n_mvnorm = 3, grouped = TRUE,
 #                                 timepoints = 3:5, nonpara_inter = TRUE,
@@ -21,7 +21,7 @@
 # x = as.matrix(sim1[,-1:-3])
 # y = sim1$y
 # series = sim1$series
-# t = sim1$position
+# t = sim1$t
 # 
 # bases = create_bases(t, keep = NULL)
 # 
@@ -34,7 +34,7 @@
 # # Run model on a grid of hyperparameter and retrieve the model with the best BIC
 # tuned_plmm <- tune_plmm(x, y, series, t, name_group_var = "group", bases$bases,
 #   gamma_vec = gammas, lambda_vec = lambdas, timexgroup = TRUE,
-#   criterion = "BIC")
+#   criterion = "BIC", verbose = TRUE)
 # 
 # head(tuned_plmm$lasso_output$theta)
 # 

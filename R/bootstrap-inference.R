@@ -76,29 +76,18 @@ calc_f_diff <- function(out_f) {
   return(out)
 }
 
-test_overall_f <- function(list_fitted_boot, plmm_output) {
-  df_list_fit <- lapply(seq_along(list_fitted_boot), function(i) {
-    df <- list_fitted_boot[[i]]$out_f
-    df$boot <- as.character(i)
-    return(df)
-  })
-
-  diff_list <- lapply(df_list_fit, calc_f_diff)
-
-  T_obs <- sum((calc_f_diff(plmm_output$lasso_output$out_f)$diff)^2)
-  T_boot <- sapply(diff_list, function(x) {
-    sum(x$diff^2)
-  })
-
-  pvalue <- pnorm(abs((2 * T_obs - mean(T_boot)) / sqrt(var(T_boot))),
-    lower.tail = FALSE
-  ) * 2
-
-  overall_f <- data.frame(T_obs, pvalue)
-
-  colnames(overall_f) <- c("T", "p-value")
-
-  return(overall_f)
+f_predict = function(t, coef, group, keep = NULL) {
+  
+  bases = create_bases(t, keep = keep)$bases
+  
+  if(group == 0) {
+    coef = coef[1:ncol(bases)]
+  } else {
+    coef = coef[(ncol(bases)+1):length(coef)]
+  }
+  
+  return(bases %*% coef)
+  
 }
 
 pred_f <- function(model, data, byseq = 0.1) {
@@ -160,6 +149,110 @@ create_CI <- function(list_diff_CI, data, min_lambda) {
   return(CI_diff_f)
 }
 
+fit_n_boot <- function(x, y, series, t, name_group_var, plmm_output, n_boot = 1000) {
+  y <- y - plmm_output$lasso_output$x_fit - rep(plmm_output$out_phi$phi, plmm_output$ni)
+  
+  t_obs <- sort(unique(t))
+  
+  data <- data.frame(y, series, t, x[, name_group_var])
+  colnames(data)[4] <- "group"
+  
+  samples <- sample_boot(data = data, n_boot = n_boot)
+  
+  pb <- utils::txtProgressBar(min = 0, max = length(samples), style = 3)
+  
+  min_lambda <- scalreg::scalreg(scale(create_bases_boot(data)), scale(data$y))$hsigma
+  
+  fitted_boot <- vector("list", n_boot)
+  
+  for (k in 1:n_boot) {
+    fitted_boot[[k]] <- fit_boot(data = samples[[k]], min_lambda = min_lambda)
+    
+    utils::setTxtProgressBar(pb, k)
+  }
+  
+  return(fitted_boot)
+}
+
+L2_test_f <- function(list_fitted_boot, plmm_output) {
+  df_list_fit <- lapply(seq_along(list_fitted_boot), function(i) {
+    df <- list_fitted_boot[[i]]$out_f
+    df$boot <- as.character(i)
+    return(df)
+  })
+  
+  diff_list <- lapply(df_list_fit, calc_f_diff)
+  
+  T_obs <- sum((calc_f_diff(plmm_output$lasso_output$out_f)$diff)^2)
+  T_boot <- sapply(diff_list, function(x) {
+    sum(x$diff^2)
+  })
+  
+  pvalue <- pnorm(abs((2 * T_obs - mean(T_boot)) / sqrt(var(T_boot))),
+                  lower.tail = FALSE
+  ) * 2
+  
+  overall_f <- data.frame(T_obs, pvalue)
+  
+  colnames(overall_f) <- c("T", "p-value")
+  
+  return(overall_f)
+}
+
+
+#' Bootstrap joint confidence bands and L2-norm based test on nonlinear functions 
+#'
+#' This function conducts a test of overall equality of two nonlinear functions
+#' and generates confidence bands for the estimated difference of the nonlinear functions using a bootstrap method.
+#'
+#' @param x A matrix of predictors.
+#' @param y A continuous vector of response variable.
+#' @param series A variable representing different series or groups in the data modeled as a random intercept.
+#' @param t A numeric vector indicating the time points.
+#' @param name_group_var A character string specifying the name of the grouping variable.
+#' @param plmm_output Output object obtained from the \code{\link{plmm_lasso}} function.
+#' @param n_boot Numeric specifying the number of bootstrap samples (default is 1000).
+#' @param predicted Logical indicating whether to plot predicted values. If \code{FALSE} only the observed time points are used.
+#'
+#' @return 
+#' A plot showing the estimated difference and confidence bands of the nonlinear functions.
+#' 
+#' A list containing:
+#'   \item{overall_test_results}{Results from the L2-norm test of equality.}
+#'   \item{CI_f}{Confidence intervals values for the difference of the estimated functions used for plotting.}
+#'
+#' @details
+#' The function generate bootstrap samples and estimate the nonlinear functions for each \code{n_boot} sample. 
+#' These bootstrap estimates are then used to compute the L2-norm test of equality and the joint confidence bands.
+#'
+#' @examples
+#' \dontrun{
+#' # Generate example data
+#' set.seed(123)
+#' data_sim <- simulate_group_inter(
+#'   N = 50, n_mvnorm = 3, grouped = TRUE,
+#'   timepoints = 3:5, nonpara_inter = TRUE,
+#'   sample_from = seq(0, 52, 13), cst_ni = FALSE,
+#'   cos = FALSE, A_vec = c(1, 1.5)
+#' )
+#' sim <- data_sim$sim
+#' x <- as.matrix(sim[, -1:-3])
+#' y <- sim$y
+#' series <- sim$series
+#' t <- sim$t
+#' bases <- create_bases(t)
+#' lambda <- 0.0046
+#' gamma <- 0.00000001
+#' plmm_output <- plmm_lasso(x, y, series, t,
+#'   name_group_var = "group", bases$bases,
+#'   gamma = gamma, lambda = lambda, timexgroup = TRUE,
+#'   criterion = "BIC"
+#' )
+#' test_f(x, y, series, t, name_group_var = "group", plmm_output)
+#' }
+#'
+#'
+#' @export
 test_f <- function(x, y, series, t, name_group_var, plmm_output, n_boot = 1000,
                    predicted = FALSE) {
   y <- y - plmm_output$lasso_output$x_fit - rep(plmm_output$out_phi$phi, plmm_output$ni)
@@ -185,7 +278,7 @@ test_f <- function(x, y, series, t, name_group_var, plmm_output, n_boot = 1000,
 
   cat("\nCompleted fitting Bootstrap samples. Now formatting results, and generating figure.\n")
 
-  overall_test_results <- test_overall_f(
+  overall_test_results <- L2_test_f(
     list_fitted_boot = fitted_boot,
     plmm_output = plmm_output
   )
@@ -199,34 +292,35 @@ test_f <- function(x, y, series, t, name_group_var, plmm_output, n_boot = 1000,
   CI_f <- create_CI(diff_predicted_f, data, min_lambda)
 
   if (predicted) {
-    plot_CI <- ggplot2::ggplot(CI_f, aes(x = t, y = `f diff.`)) +
-      geom_hline(yintercept = 0, linetype = "dashed", alpha = 0.5) +
-      geom_ribbon(aes(x = t, ymin = `Lower 95%`, ymax = `Upper 95%`),
+    plot_CI <- ggplot2::ggplot(CI_f, ggplot2::aes(x = t, y = `f diff.`)) +
+      ggplot2::geom_hline(yintercept = 0, linetype = "dashed", alpha = 0.5) +
+      ggplot2::geom_ribbon(ggplot2::aes(x = t, ymin = `Lower 95%`, ymax = `Upper 95%`),
         data = CI_f,
         fill = "gray", alpha = 0.6
       ) +
-      geom_line(linewidth = 0.7) +
-      geom_point(
-        aes(x = t, y = `f diff.`),
+      ggplot2::geom_line(linewidth = 0.7) +
+      ggplot2::geom_point(
+        ggplot2::aes(x = t, y = `f diff.`),
         CI_f[CI_f$t %in% t_obs, ]
       ) +
-      scale_x_continuous(breaks = t_obs)
+      ggplot2::scale_x_continuous(breaks = t_obs)
   } else {
     CI_obs_f <- CI_f[CI_f$t %in% t_obs, ]
 
-    plot_CI <- ggplot2::ggplot(CI_obs_f, aes(x = t, y = `f diff.`)) +
-      geom_hline(yintercept = 0, linetype = "dashed", alpha = 0.5) +
-      geom_ribbon(aes(x = t, ymin = `Lower 95%`, ymax = `Upper 95%`),
+    plot_CI <- ggplot2::ggplot(CI_obs_f, ggplot2::aes(x = t, y = `f diff.`)) +
+      ggplot2::geom_hline(yintercept = 0, linetype = "dashed", alpha = 0.5) +
+      ggplot2::geom_ribbon(ggplot2::aes(x = t, ymin = `Lower 95%`, ymax = `Upper 95%`),
         data = CI_obs_f,
         fill = "gray", alpha = 0.6
       ) +
-      geom_line(linewidth = 0.7) +
-      geom_point() +
-      scale_x_continuous(breaks = t_obs)
+      ggplot2::geom_line(linewidth = 0.7) +
+      ggplot2::geom_point() +
+      ggplot2::scale_x_continuous(breaks = t_obs)
   }
-
+  print(plot_CI)
   return(list(
-    overall_test_results = overall_test_results, CI_f = CI_f,
-    plot_CI = plot_CI
+    overall_test_results = overall_test_results, CI_f = CI_f
   ))
 }
+
+

@@ -16,7 +16,8 @@ plmm_lasso(
   timexgroup,
   criterion,
   cvg_tol = 0.001,
-  max_iter = 100
+  max_iter = 100,
+  verbose = FALSE
 )
 }
 \arguments{
@@ -44,6 +45,8 @@ If \code{TRUE}, each group in \code{name_group_var} will have its own estimate o
 \item{cvg_tol}{Convergence tolerance for the algorithm.}
 
 \item{max_iter}{Maximum number of iterations allowed for convergence.}
+
+\item{verbose}{Logical indicating whether to print convergence details at each iteration. Default is \code{FALSE}.}
 }
 \value{
 A list containing the following components:
@@ -74,21 +77,25 @@ The algorithm iteratively updates the estimates until convergence or until the m
 \dontrun{
 # Generate example data
 set.seed(123)
-data_sim = simulate_group_inter(N = 50, n_mvnorm = 3, grouped = TRUE,
-                                timepoints = 3:5, nonpara_inter = TRUE,
-                                sample_from = seq(0,52,13), cst_ni = FALSE,
-                                cos = FALSE, A_vec = c(1, 1.5))
-sim = data_sim$sim
-x = as.matrix(sim[,-1:-3])
-y = sim$y
-series = sim$series
-t = sim$t
-bases = create_bases(t)
+data_sim <- simulate_group_inter(
+  N = 50, n_mvnorm = 3, grouped = TRUE,
+  timepoints = 3:5, nonpara_inter = TRUE,
+  sample_from = seq(0, 52, 13), cst_ni = FALSE,
+  cos = FALSE, A_vec = c(1, 1.5)
+)
+sim <- data_sim$sim
+x <- as.matrix(sim[, -1:-3])
+y <- sim$y
+series <- sim$series
+t <- sim$t
+bases <- create_bases(t)
 lambda <- 0.0046
 gamma <- 0.00000001
-plmm_output = plmm_lasso(x, y, series, t, name_group_var = "group", bases$bases,
-                        gamma = gamma, lambda = lambda, timexgroup = TRUE,
-                        criterion = "BIC")
+plmm_output <- plmm_lasso(x, y, series, t,
+  name_group_var = "group", bases$bases,
+  gamma = gamma, lambda = lambda, timexgroup = TRUE,
+  criterion = "BIC"
+)
 }
 
 }
