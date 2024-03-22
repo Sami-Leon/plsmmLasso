@@ -135,7 +135,7 @@ create_CI <- function(list_diff_CI, data, min_lambda) {
     max(abs(x$diff - d_bar) / s_bar)
   }))
 
-  q_b <- quantile(M_b, probs = 0.975)
+  q_b <- stats::quantile(M_b, probs = 0.975)
 
   CI_low <- data.frame(t = list_diff_CI[[1]]$t, low = d_bar - q_b * s_bar)
   CI_up <- data.frame(t = list_diff_CI[[1]]$t, up = d_bar + q_b * s_bar)
@@ -188,7 +188,7 @@ L2_test_f <- function(list_fitted_boot, plmm_output) {
     sum(x$diff^2)
   })
   
-  pvalue <- pnorm(abs((2 * T_obs - mean(T_boot)) / sqrt(var(T_boot))),
+  pvalue <- stats::pnorm(abs((2 * T_obs - mean(T_boot)) / sqrt(stats::var(T_boot))),
                   lower.tail = FALSE
   ) * 2
   
@@ -227,12 +227,11 @@ L2_test_f <- function(list_fitted_boot, plmm_output) {
 #'
 #' @examples
 #' \dontrun{
-#' # Generate example data
 #' set.seed(123)
 #' data_sim <- simulate_group_inter(
 #'   N = 50, n_mvnorm = 3, grouped = TRUE,
 #'   timepoints = 3:5, nonpara_inter = TRUE,
-#'   sample_from = seq(0, 52, 13), cst_ni = FALSE,
+#'   sample_from = seq(0, 52, 13), 
 #'   cos = FALSE, A_vec = c(1, 1.5)
 #' )
 #' sim <- data_sim$sim
@@ -251,7 +250,7 @@ L2_test_f <- function(list_fitted_boot, plmm_output) {
 #' test_f(x, y, series, t, name_group_var = "group", plmm_output)
 #' }
 #'
-#'
+#' @importFrom rlang .data
 #' @export
 test_f <- function(x, y, series, t, name_group_var, plmm_output, n_boot = 1000,
                    predicted = FALSE) {
@@ -292,24 +291,26 @@ test_f <- function(x, y, series, t, name_group_var, plmm_output, n_boot = 1000,
   CI_f <- create_CI(diff_predicted_f, data, min_lambda)
 
   if (predicted) {
-    plot_CI <- ggplot2::ggplot(CI_f, ggplot2::aes(x = t, y = `f diff.`)) +
+    plot_CI <- ggplot2::ggplot(CI_f, ggplot2::aes(x = t, y = .data$`f diff.`)) +
       ggplot2::geom_hline(yintercept = 0, linetype = "dashed", alpha = 0.5) +
-      ggplot2::geom_ribbon(ggplot2::aes(x = t, ymin = `Lower 95%`, ymax = `Upper 95%`),
+      ggplot2::geom_ribbon(ggplot2::aes(x = t, ymin = .data$`Lower 95%`, 
+                                        ymax = .data$`Upper 95%`),
         data = CI_f,
         fill = "gray", alpha = 0.6
       ) +
       ggplot2::geom_line(linewidth = 0.7) +
       ggplot2::geom_point(
-        ggplot2::aes(x = t, y = `f diff.`),
+        ggplot2::aes(x = t, y = .data$`f diff.`),
         CI_f[CI_f$t %in% t_obs, ]
       ) +
       ggplot2::scale_x_continuous(breaks = t_obs)
   } else {
     CI_obs_f <- CI_f[CI_f$t %in% t_obs, ]
 
-    plot_CI <- ggplot2::ggplot(CI_obs_f, ggplot2::aes(x = t, y = `f diff.`)) +
+    plot_CI <- ggplot2::ggplot(CI_obs_f, ggplot2::aes(x = t, y = .data$`f diff.`)) +
       ggplot2::geom_hline(yintercept = 0, linetype = "dashed", alpha = 0.5) +
-      ggplot2::geom_ribbon(ggplot2::aes(x = t, ymin = `Lower 95%`, ymax = `Upper 95%`),
+      ggplot2::geom_ribbon(ggplot2::aes(x = t, ymin = .data$`Lower 95%`,
+                                        ymax = .data$`Upper 95%`),
         data = CI_obs_f,
         fill = "gray", alpha = 0.6
       ) +

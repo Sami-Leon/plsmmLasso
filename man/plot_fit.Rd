@@ -45,12 +45,11 @@ If \code{predicted} is \code{TRUE} the function uses the model from \code{plmm_o
 }
 \examples{
 \dontrun{
-# Generate example data
 set.seed(123)
 data_sim <- simulate_group_inter(
   N = 50, n_mvnorm = 3, grouped = TRUE,
   timepoints = 3:5, nonpara_inter = TRUE,
-  sample_from = seq(0, 52, 13), cst_ni = FALSE,
+  sample_from = seq(0, 52, 13),
   cos = FALSE, A_vec = c(1, 1.5)
 )
 sim <- data_sim$sim
@@ -68,5 +67,4 @@ plmm_output <- plmm_lasso(x, y, series, t,
 )
 plot_fit(x, y, series, t, name_group_var = "group", plmm_output)
 }
-
 }

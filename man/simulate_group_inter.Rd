@@ -11,7 +11,6 @@ simulate_group_inter(
   timepoints = 3:5,
   nonpara_inter = TRUE,
   sample_from,
-  cst_ni,
   cos = FALSE,
   A_vec = c(1, 1.5)
 )
@@ -29,8 +28,6 @@ simulate_group_inter(
 
 \item{sample_from}{Vector of time points to sample from.}
 
-\item{cst_ni}{Logical indicating whether to sample time points for each subject or fix them.}
-
 \item{cos}{Logical indicating whether to use cosine function for second group.}
 
 \item{A_vec}{Vector of amplitudes for the nonlinear functions for each group.}
@@ -45,7 +42,9 @@ A list with three components:
 Simulate a partial linear mixed-effects model.
 }
 \examples{
+\dontrun{
 simulate_group_inter(N = 50, n_mvnorm = 100, grouped = TRUE,
                      timepoints = 3:5, nonpara_inter = TRUE,
-                     sample_from = seq(0, 10, by = 0.1), cst_ni = TRUE, cos = FALSE, A_vec = c(1, 1.5))
+                     sample_from = seq(0, 10, by = 0.1), cos = FALSE, A_vec = c(1, 1.5))
+}
 }

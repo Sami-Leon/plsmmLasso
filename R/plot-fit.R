@@ -20,12 +20,11 @@
 #'
 #' @examples
 #' \dontrun{
-#' # Generate example data
 #' set.seed(123)
 #' data_sim <- simulate_group_inter(
 #'   N = 50, n_mvnorm = 3, grouped = TRUE,
 #'   timepoints = 3:5, nonpara_inter = TRUE,
-#'   sample_from = seq(0, 52, 13), cst_ni = FALSE,
+#'   sample_from = seq(0, 52, 13),
 #'   cos = FALSE, A_vec = c(1, 1.5)
 #' )
 #' sim <- data_sim$sim
@@ -43,7 +42,7 @@
 #' )
 #' plot_fit(x, y, series, t, name_group_var = "group", plmm_output)
 #' }
-#'
+#' @importFrom rlang .data
 #' @export
 plot_fit <- function(x, y, series, t,  name_group_var = "group", 
                      plmm_output, predicted = FALSE) {
@@ -82,7 +81,7 @@ plot_fit <- function(x, y, series, t,  name_group_var = "group",
   
   colnames(predicted_f) <- c("t", "f_cont", "group")
   
-  means <- aggregate(cbind(phi, x_fit) ~ group, data = data, FUN = mean)
+  means <- stats::aggregate(cbind(phi, x_fit) ~ group, data = data, FUN = mean)
   names(means) <- c("group", "phi", "x_fit")
   
   predicted_f <- merge(predicted_f, means, by = "group")
@@ -95,35 +94,33 @@ plot_fit <- function(x, y, series, t,  name_group_var = "group",
   
   if(predicted) {
     p.F.overall <- p + ggplot2::geom_line(ggplot2::aes(x = t, y = y, group = series)) +
-      ggplot2::geom_line(ggplot2::aes(x = t, y = mean_trajectories), data = predicted_f, size = 1,
+      ggplot2::geom_line(ggplot2::aes(x = t, y = .data$mean_trajectories), data = predicted_f, size = 1,
                          col = "red") +
-      ggplot2::facet_grid(. ~ group) + ggplot2::geom_point(ggplot2::aes(x = t, y = mean_trajectories), 
+      ggplot2::facet_grid(. ~ group) + ggplot2::geom_point(ggplot2::aes(x = t, y = .data$mean_trajectories), 
                                                            data = obs_f, size = 2,
                                                            col = "red") +
       ggplot2::scale_x_continuous(breaks = t_obs)
     
-    p.F <- ggplot2::ggplot(ggplot2::aes(x = t, y = f_cont), data = predicted_f) +
+    p.F <- ggplot2::ggplot(ggplot2::aes(x = t, y = .data$f_cont), data = predicted_f) +
       ggplot2::geom_line(size = 1, col = "red") +
       ggplot2::facet_grid(. ~ group) +
-      ggplot2::geom_point(ggplot2::aes(x = t, y = f_cont),
+      ggplot2::geom_point(ggplot2::aes(x = t, y = .data$f_cont),
                           data = obs_f, size = 2, col = "red") +
       ggplot2::scale_x_continuous(breaks = t_obs)
   } else {
     p.F.overall <- p + ggplot2::geom_line(ggplot2::aes(x = t, y = y, group = series)) +
-      ggplot2::geom_line(ggplot2::aes(x = t, y = mean_trajectories), data = obs_f, size = 1,
+      ggplot2::geom_line(ggplot2::aes(x = t, y = .data$mean_trajectories), data = obs_f, size = 1,
                          col = "red") +
-      ggplot2::geom_point(ggplot2::aes(x = t, y = mean_trajectories), 
+      ggplot2::geom_point(ggplot2::aes(x = t, y = .data$mean_trajectories), 
                           data = obs_f, size = 2, col = "red") +
       ggplot2::facet_grid(. ~ group) + 
-      ggplot2::scale_x_continuous(breaks = t_obs) +
-      ggplot2::ggtitle("Estimated mean trajectories with observed data")
+      ggplot2::scale_x_continuous(breaks = t_obs) 
     
-    p.F <- ggplot2::ggplot(ggplot2::aes(x = t, y = f_cont), data = obs_f) +
+    p.F <- ggplot2::ggplot(ggplot2::aes(x = t, y = .data$f_cont), data = obs_f) +
       ggplot2::geom_line(size = 1, col = "red") +
       ggplot2::facet_grid(. ~ group) +
       ggplot2::geom_point(size = 2, col = "red") +
-      ggplot2::scale_x_continuous(breaks = t_obs) +
-      ggtitle("Estimated nonlinear functions")
+      ggplot2::scale_x_continuous(breaks = t_obs) 
   }
   
   print(p.F.overall)

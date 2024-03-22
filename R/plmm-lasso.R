@@ -25,8 +25,8 @@ init_params <- function(y, series) {
     FUN = function(x) mean(x, na.rm = TRUE)
   )
 
-  su <- var(c(y_series_means), na.rm = TRUE)
-  se <- var(y, na.rm = TRUE) - su
+  su <- stats::var(c(y_series_means), na.rm = TRUE)
+  se <- stats::var(y, na.rm = TRUE) - su
   sr <- se / su
   invisible(list(sr = sr, se = se))
 }
@@ -111,7 +111,7 @@ joint_lasso <- function(x, y, t, name_group_var, bases, se, gamma,
 
 
 
-  coef_joint_lasso <- as.vector(coef(glmnet::glmnet(combined_x_bases_lasso[, -1],
+  coef_joint_lasso <- as.vector(stats::coef(glmnet::glmnet(combined_x_bases_lasso[, -1],
     y_stand,
     alpha = 1, lambda = lambda,
     standardize = FALSE,
@@ -191,12 +191,11 @@ joint_lasso <- function(x, y, t, name_group_var, bases, se, gamma,
 #'
 #' @examples
 #' \dontrun{
-#' # Generate example data
 #' set.seed(123)
 #' data_sim <- simulate_group_inter(
 #'   N = 50, n_mvnorm = 3, grouped = TRUE,
 #'   timepoints = 3:5, nonpara_inter = TRUE,
-#'   sample_from = seq(0, 52, 13), cst_ni = FALSE,
+#'   sample_from = seq(0, 52, 13), 
 #'   cos = FALSE, A_vec = c(1, 1.5)
 #' )
 #' sim <- data_sim$sim
@@ -393,7 +392,7 @@ plmm_lasso <- function(x, y, series, t, name_group_var, bases,
   hyperparameters <- data.frame(lambda = lambda, gamma = gamma)
   converged <- ifelse(Iter >= max_iter, FALSE, TRUE)
 
-  Z <- model.matrix(~ 0 + factor(series))
+  Z <- stats::model.matrix(~ 0 + factor(series))
   logLik <- mvtnorm::dmvnorm(
     x = y,
     mean = as.vector(lasso_output$x_fit) + lasso_output$out_f$f_fit,

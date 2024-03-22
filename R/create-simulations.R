@@ -21,7 +21,6 @@ cst_cor <- function(n, rho) {
 #' @param timepoints Vector specifying timepoints for each subject.
 #' @param nonpara_inter Logical indicating whether the nonparametric function is specific to each group.
 #' @param sample_from Vector of time points to sample from.
-#' @param cst_ni Logical indicating whether to sample time points for each subject or fix them.
 #' @param cos Logical indicating whether to use cosine function for second group.
 #' @param A_vec Vector of amplitudes for the nonlinear functions for each group.
 #' @return A list with three components: 
@@ -30,12 +29,14 @@ cst_cor <- function(n, rho) {
 #'   \item{f_val}{Values of the nonlinear functions.}
 #' @export
 #' @examples
+#' \dontrun{
 #' simulate_group_inter(N = 50, n_mvnorm = 100, grouped = TRUE,
 #'                      timepoints = 3:5, nonpara_inter = TRUE,
-#'                      sample_from = seq(0, 10, by = 0.1), cst_ni = TRUE, cos = FALSE, A_vec = c(1, 1.5))
+#'                      sample_from = seq(0, 10, by = 0.1), cos = FALSE, A_vec = c(1, 1.5))
+#'}
 simulate_group_inter <- function(N = 50, n_mvnorm = 100, grouped = TRUE,
                                  timepoints = 3:5, nonpara_inter = TRUE,
-                                 sample_from, cst_ni, cos = FALSE, A_vec = c(1, 1.5)) {
+                                 sample_from, cos = FALSE, A_vec = c(1, 1.5)) {
   if (nonpara_inter) {
     A <- c(A_vec[1], A_vec[2])
     omega <- c(60, 110)
@@ -49,18 +50,15 @@ simulate_group_inter <- function(N = 50, n_mvnorm = 100, grouped = TRUE,
     f1_mean <- f0_mean
   }
   
-  phi <- rnorm(N, 0, sqrt(0.5))
+  phi <- stats::rnorm(N, 0, sqrt(0.5))
   
   y <- NULL
   sim <- NULL
   f_val <- NULL
   
   for (i in 1:N) {
-    if (cst_ni) {
-      ni <- timepoints
-    } else {
-      ni <- sample(timepoints, 1)
-    }
+    ni <- sample(timepoints, 1)
+
     
     if (grouped) {
       theta <- c(3, 2, 1)
@@ -70,9 +68,9 @@ simulate_group_inter <- function(N = 50, n_mvnorm = 100, grouped = TRUE,
     
     group <- rep(sample(c(0, 1), 1), ni)
     
-    x1 <- rep(rnorm(1, 1, sqrt(0.5)), ni)
+    x1 <- rep(stats::rnorm(1, 1, sqrt(0.5)), ni)
     
-    eps <- rnorm(ni, 0, sqrt(0.2))
+    eps <- stats::rnorm(ni, 0, sqrt(0.2))
     
     t <- sort(sample(sample_from, ni, replace = F))
     

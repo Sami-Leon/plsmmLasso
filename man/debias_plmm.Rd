@@ -32,11 +32,10 @@ The debiasing process utilizes these scores to compute debiased estimates of the
 }
 \examples{
 \dontrun{
-# Generate example data
 set.seed(123)
 data_sim = simulate_group_inter(N = 50, n_mvnorm = 3, grouped = TRUE,
                                 timepoints = 3:5, nonpara_inter = TRUE,
-                                sample_from = seq(0,52,13), cst_ni = FALSE,
+                                sample_from = seq(0,52,13),
                                 cos = FALSE, A_vec = c(1, 1.5))
 sim = data_sim$sim
 x = as.matrix(sim[,-1:-3])

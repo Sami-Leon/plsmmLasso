@@ -17,11 +17,10 @@
 #' 
 #' @examples
 #' \dontrun{
-#' # Generate example data
 #' set.seed(123)
 #' data_sim = simulate_group_inter(N = 50, n_mvnorm = 3, grouped = TRUE,
 #'                                 timepoints = 3:5, nonpara_inter = TRUE,
-#'                                 sample_from = seq(0,52,13), cst_ni = FALSE,
+#'                                 sample_from = seq(0,52,13),
 #'                                 cos = FALSE, A_vec = c(1, 1.5))
 #' sim = data_sim$sim
 #' x = as.matrix(sim[,-1:-3])
@@ -43,7 +42,7 @@ debias_plmm <- function(x, y, series, plmm_output, a = 1, Z = NULL) {
 
   series <- as.factor(series)
 
-  z <- model.matrix(~ series - 1)
+  z <- stats::model.matrix(~ series - 1)
 
   Sigma_a <- a * plmm_output$su * z %*% t(z) + plmm_output$se * diag(rep(1, length(y_offset)))
 
@@ -96,7 +95,7 @@ debias_plmm <- function(x, y, series, plmm_output, a = 1, Z = NULL) {
 
   # Calculate p-value
   beta_debias_rescaled <- beta_debias * (1 / beta_debias_sd)
-  pv <- 2 * pnorm(abs(beta_debias_rescaled), lower.tail = FALSE)
+  pv <- 2 * stats::pnorm(abs(beta_debias_rescaled), lower.tail = FALSE)
 
   df.posi <- data.frame(
     Estimate = beta_original,
