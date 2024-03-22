@@ -1,10 +1,19 @@
 Package: plmmLasso
-Title: What the Package Does (One Line, Title Case)
+Title: Variable Selection and Inference for Partial Linear Mixed-Effects Model
 Version: 0.0.0.9000
 Authors@R: 
     person("Sami", "Leon", , "samileon@hotmail.fr", role = c("aut", "cre"),
            comment = c(ORCID = "https://orcid.org/0000-0001-9138-9450"))
-Description: What the package does (one paragraph).
+Description: Implements a partial linear mixed-effects model (PLMM) featuring a 
+  random intercept and applies a lasso penalty to both the fixed effects and the 
+  coefficients associated with the nonlinear functions. Nonlinear functions are 
+  represented using a set of basis functions. The model also accommodates
+  interactions between the nonlinear function and a grouping variable, allowing
+  for the capture of group-specific nonlinearities. Estimation is conducted using
+  an Expectation-Maximization (EM) algorithm, and the package offers flexibility 
+  in choosing between various information criteria for model selection, including 
+  BIC, BICc, or EBIC. Post-selection inference is carried out using a debiasing
+  method, while inference on the nonlinear functions employs a bootstrap approach.
 License: GPL (>= 3)
 Imports: 
     dplyr,
