@@ -190,7 +190,7 @@ joint_lasso <- function(x, y, t, name_group_var, bases, se, gamma,
 #' The model includes a random intercept for each level of the variable specified by \code{series}. Additionally, if \code{timexgroup} is
 #' set to \code{TRUE}, the model includes a time-by-group interaction, allowing each group of \code{name_group_var} to have its own estimate
 #' of the nonlinear function, which can capture group-specific nonlinearities over time. If \code{name_group_var} is set to \code{NULL} only
-#' one nonlinear function for the whole data is being used. 
+#' one nonlinear function for the whole data is being used 
 #'
 #' The algorithm iteratively updates the estimates until convergence or until the maximum number of iterations is reached.
 #'
@@ -404,7 +404,7 @@ plmm_lasso <- function(x, y, series, t, name_group_var = NULL, bases,
   }
 
   if(is.null(name_group_var)) {
-    f_mean = mean(unique(lasso_output$out_f$f_fit))
+    f_mean = mean(unique(plmm_output$lasso_output$out_f$f_fit))
     lasso_output$out_f$f_fit <- lasso_output$out_f$f_fit - f_mean
     lasso_output$theta["Intercept"] <- lasso_output$theta["Intercept"] + f_mean
     lasso_output$x_fit <- as.matrix(cbind(1, x)) %*% lasso_output$theta
