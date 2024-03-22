@@ -6,13 +6,13 @@ Authors@R:
            comment = c(ORCID = "https://orcid.org/0000-0001-9138-9450"))
 Description: Implements a partial linear mixed-effects model (PLMM) featuring a 
   random intercept and applies a lasso penalty to both the fixed effects and the 
-  coefficients associated with the nonlinear functions. Nonlinear functions are 
-  represented using a set of basis functions. The model also accommodates
+  coefficients associated with the nonlinear function. The model also accommodates
   interactions between the nonlinear function and a grouping variable, allowing
-  for the capture of group-specific nonlinearities. Estimation is conducted using
-  an Expectation-Maximization (EM) algorithm, and the package offers flexibility 
+  for the capture of group-specific nonlinearities. Nonlinear functions are 
+  modeled using a set of basis functions. Estimation is conducted using
+  an Expectation-Maximization algorithm, and the package offers flexibility 
   in choosing between various information criteria for model selection, including 
-  BIC, BICc, or EBIC. Post-selection inference is carried out using a debiasing
+  BIC, BICC, or EBIC. Post-selection inference is carried out using a debiasing
   method, while inference on the nonlinear functions employs a bootstrap approach.
 License: GPL (>= 3)
 Imports: 
