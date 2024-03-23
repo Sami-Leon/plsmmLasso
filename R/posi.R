@@ -55,10 +55,10 @@ debias_plmm <- function(x, y, series, plmm_output, a = 1, Z = NULL) {
   y_a <- Sigma_a_sqrt_inv %*% y_offset
 
   if (is.null(Z)) {
-    de_sparsified <- hdi::lasso.proj(x_a, y_a,
+    de_sparsified <- suppressMessages(hdi::lasso.proj(x_a, y_a,
       suppress.grouptesting = TRUE, return.Z = TRUE,
       do.ZnZ = TRUE, betainit = "scaled lasso"
-    )
+    ))
 
     debias_score_matrix <- de_sparsified$Z
   } else {

@@ -82,6 +82,9 @@ plmm_output <- plmm_lasso(x, y, series, t,
   gamma = gamma, lambda = lambda, timexgroup = TRUE,
   criterion = "BIC"
 )
+plmm_output$lasso_output$theta
+#> Intercept     group        x1        x2        x3        x4        x5 
+#> 3.5544003 0.4262652 0.0000000 0.0000000 0.0000000 0.0000000 0.0000000
 ```
 
 With a larger lasso penalty more coefficients are set to zero. The
@@ -114,7 +117,7 @@ tuned_plmm <- tune_plmm(x, y, series, t,
 
 The function tuned_plmm tries every possible combination of the values
 from lambdas and gamma and returns the model with the best BIC. This
-example is for illustration only and typicaly wider and finer grid
+example is for illustration only, in practice a more exhaustive grid
 should be used.
 
 ### Plotting the results
@@ -144,9 +147,6 @@ used.
 
 ``` r
 debias_plmm(x, y, series, tuned_plmm)
-#> Nodewise regressions will be computed as no argument Z was provided.
-#> You can store Z to avoid the majority of the computation next time around.
-#> Z only depends on the design matrix x.
 #>         Estimate   Debiased Std. Error   Lower 95% Upper 95%      p-value
 #> group 3.20441442 3.31447827 0.33608394  2.65575376 3.9732028 6.079223e-23
 #> x1    1.95569696 2.03694234 0.21339004  1.61869786 2.4551868 1.352832e-21

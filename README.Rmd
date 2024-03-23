@@ -78,9 +78,11 @@ plmm_output <- plmm_lasso(x, y, series, t,
   gamma = gamma, lambda = lambda, timexgroup = TRUE,
   criterion = "BIC"
 )
+plmm_output$lasso_output$theta
 ```
 
-With a larger lasso penalty more coefficients are set to zero. The coefficients associated to the nonlinear functions are alpha.
+With a larger lasso penalty more coefficients are set to zero.
+The coefficients associated to the nonlinear functions are alpha.
 ```{r}
 head(plmm_output$lasso_output$alpha)
 ```
@@ -102,7 +104,7 @@ tuned_plmm <- tune_plmm(x, y, series, t,
 ```
 
 
-The function tuned_plmm tries every possible combination of the values from lambdas and gamma and returns the model with the best BIC. This example is for illustration only and typicaly wider and finer grid should be used.
+The function tuned_plmm tries every possible combination of the values from lambdas and gamma and returns the model with the best BIC. This example is for illustration only, in practice a more exhaustive grid should be used.
 
 ### Plotting the results
 The function plot_fit allows for the vizualisation of the estimated mean trajectories as well as the estimate of the nonlinear functions. By default only the observed time points are being used, to use predicted time points the argument predicted can be set to TRUE.
