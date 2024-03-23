@@ -82,7 +82,7 @@ plmm_output <- plmm_lasso(x, y, series, t,
 
 With a larger lasso penalty more coefficients are set to zero. The coefficients associated to the nonlinear functions are alpha.
 ```{r}
-plmm_output$lasso_output$alpha
+head(plmm_output$lasso_output$alpha)
 ```
 
 Similar behavior would be observe for the alphas if we were to increase the value of gamma.
@@ -129,7 +129,7 @@ test_f_results <- test_f(x, y, series, t,
  n_boot = 10
 )
 test_f_results[[1]]
-test_f_results[[2]]
+head(test_f_results[[2]])
 ```
 
 Similarly than for the plot_fit function the argument predicted can be changed to TRUE, to display the joint confidence bands as a continuous function of time rather than at the observed time points only.
@@ -197,5 +197,3 @@ plot_fit(x, y, series, t, name_group_var = NULL, tuned_plmm)
 ```
 
 Only one figure is displyed now since there is no grouping variable.
-
-You'll still need to render `README.Rmd` regularly, to keep `README.md` up-to-date. `devtools::build_readme()` is handy for this.
