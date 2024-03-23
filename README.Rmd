@@ -19,7 +19,7 @@ knitr::opts_chunk$set(
 [![R-CMD-check](https://github.com/Sami-Leon/plsmmLasso/actions/workflows/R-CMD-check.yaml/badge.svg)](https://github.com/Sami-Leon/plsmmLasso/actions/workflows/R-CMD-check.yaml)
 <!-- badges: end -->
 
-The goal of plsmmLasso is to ...
+The goal of plsmmLasso is to allow the estimation of a Regularized Partial Linear Semiparametric Mixed-Effects Model (PLSMM) using a dictionary approach for modeling the nonparametric component of the model. Using a set of bases functions the model automatically select the bases functions using a lasso penalty and perform variable selection with another lasso penalty on the fixed-effects. The implementation allow for the incorporation of a random intercept as well.
 
 ## Installation
 
@@ -30,27 +30,172 @@ You can install the development version of plsmmLasso from [GitHub](https://gith
 devtools::install_github("Sami-Leon/plsmmLasso")
 ```
 
-## Example
+## Example I
 
-This is a basic example which shows you how to solve a common problem:
+### Fitting the model
+This is a basic example using a simulated dataset to show how to use the main function of the plsmmLasso package. Here we assume a grouping variable and different nonlinear functions for each group.
 
 ```{r example}
 library(plsmmLasso)
-## basic example code
+
+# Simulate a dataset
+set.seed(123)
+data_sim <- simulate_group_inter(
+  N = 50, n_mvnorm = 3, grouped = TRUE,
+  timepoints = 3:5, nonpara_inter = TRUE,
+  sample_from = seq(0, 52, 13), 
+  cos = FALSE, A_vec = c(1, 1.5)
+)
+sim <- data_sim$sim
+
+# Fit the data
+x <- as.matrix(sim[, -1:-3])
+y <- sim$y
+series <- sim$series
+t <- sim$t
+bases <- create_bases(t)
+lambda <- 0.0046
+gamma <- 0.00001
+plmm_output <- plmm_lasso(x, y, series, t,
+  name_group_var = "group", bases$bases,
+  gamma = gamma, lambda = lambda, timexgroup = TRUE,
+  criterion = "BIC"
+)
 ```
 
-What is special about using `README.Rmd` instead of just `README.md`? You can include R chunks like so:
+One the most important output of the object plmm_output are the estimates of the fixed-effects.
 
-```{r cars}
-summary(cars)
+```{r}
+plmm_output$lasso_output$theta
 ```
+
+Here we see that some covariates have small values, but most are non-zeros. If we want more regularization for the fixed-effects we can use a larger value for lambda.
+
+```{r}
+lambda <- 0.1
+plmm_output <- plmm_lasso(x, y, series, t,
+  name_group_var = "group", bases$bases,
+  gamma = gamma, lambda = lambda, timexgroup = TRUE,
+  criterion = "BIC"
+)
+```
+
+With a larger lasso penalty more coefficients are set to zero. The coefficients associated to the nonlinear functions are alpha.
+```{r}
+plmm_output$lasso_output$alpha
+```
+
+Similar behavior would be observe for the alphas if we were to increase the value of gamma.
+
+To find optimal values for gamma and lambda we tune these hyperparameters using BIC-type criteria using the tune_plmm function and a grid search. 
+
+```{r}
+lambdas <- gammas <- round(exp(seq(log(1), log(1 * 0.00001),
+              length.out = 5
+)), digits = 5)
+
+tuned_plmm <- tune_plmm(x, y, series, t,
+                       name_group_var = "group", bases$bases,
+                       gamma_vec = gammas, lambda_vec = lambdas, timexgroup = TRUE,
+                       criterion = "BIC"
+)
+```
+
+
+The function tuned_plmm tries every possible combination of the values from lambdas and gamma and returns the model with the best BIC. This example is for illustration only and typicaly wider and finer grid should be used.
+
+### Plotting the results
+The function plot_fit allows for the vizualisation of the estimated mean trajectories as well as the estimate of the nonlinear functions. By default only the observed time points are being used, to use predicted time points the argument predicted can be set to TRUE.
+```{r}
+plot_fit(x, y, series, t, name_group_var = "group", tuned_plmm)
+
+plot_fit(x, y, series, t, name_group_var = "group", tuned_plmm, predicted = TRUE)
+```
+
+### Post-selection inference
+To compute p-values on the fixed-effects the function debias_plmm can be used.
+
+```{r}
+debias_plmm(x, y, series, tuned_plmm)
+```
+
+The function reports the original coefficients, debiased coeffcients, standard error, confidence intervals and p-values. These p-values are already ajudsted for the selection process of the lasso, and provide valid inference.
+
+### Test on the nonlinear functions
+Finally we can perform some tests on the nonlinear functions. The first element of the list is an overall test of equality, if the p-value is $<0.05$ we reject the null hypothesis of equality, and conclude that overall the two nonlinear functions are different. To obtain a comparison at each time point confidence bands are computed, and a figure displaying these confidence bands is generated. For the time points associated with confidence bands that include $0$ we can not reject the null hypothesis that the nonlinear functions are the same for this time point. The data.frame that is used to generate this figure can be found in the second element of the output list. 
+```{r}
+test_f_results <- test_f(x, y, series, t,
+ name_group_var = "group", tuned_plmm,
+ n_boot = 10
+)
+test_f_results[[1]]
+test_f_results[[2]]
+```
+
+Similarly than for the plot_fit function the argument predicted can be changed to TRUE, to display the joint confidence bands as a continuous function of time rather than at the observed time points only.
+```{r}
+test_f_results <- test_f(x, y, series, t,
+ name_group_var = "group", tuned_plmm,
+ n_boot = 10, predicted = TRUE
+)
+```
+
+## Example II
+The model is flexible and if the nonlinear functions do not appear to be different the argument timexgroup can be set to FALSE. Here we simulate a data where the nonlinear functions are the same, and fit the data accordingly
+```{r}
+set.seed(123)
+data_sim <- simulate_group_inter(
+  N = 50, n_mvnorm = 3, grouped = TRUE,
+  timepoints = 3:5, nonpara_inter = FALSE,
+  sample_from = seq(0, 52, 13), 
+  cos = FALSE, A_vec = c(1, 1.5)
+)
+sim <- data_sim$sim
+
+# Fit the data
+x <- as.matrix(sim[, -1:-3])
+y <- sim$y
+series <- sim$series
+t <- sim$t
+bases <- create_bases(t)
+tuned_plmm <- tune_plmm(x, y, series, t,
+                       name_group_var = "group", bases$bases,
+                       gamma_vec = gammas, lambda_vec = lambdas, timexgroup = FALSE,
+                       criterion = "BIC"
+)
+
+plot_fit(x, y, series, t, name_group_var = "group", tuned_plmm)
+```
+
+As we can see now the estimates of the nonlinear functions are the same. 
+It is also possible not to use any grouping variable for the name_group_var argument.
+
+Here we simulate a data that does not have an effect of a grouping variable (no difference in height of the overall mean trajectories) and the same nonlinear functions.
+```{r}
+set.seed(123)
+data_sim <- simulate_group_inter(
+  N = 50, n_mvnorm = 3, grouped = FALSE,
+  timepoints = 3:5, nonpara_inter = FALSE,
+  sample_from = seq(0, 52, 13), 
+  cos = FALSE, A_vec = c(1, 1.5)
+)
+sim <- data_sim$sim
+
+# Fit the data
+x <- as.matrix(sim[, -1:-3])
+y <- sim$y
+series <- sim$series
+t <- sim$t
+bases <- create_bases(t)
+tuned_plmm <- tune_plmm(x, y, series, t,
+                       name_group_var = NULL, bases$bases,
+                       gamma_vec = gammas, lambda_vec = lambdas, timexgroup = FALSE,
+                       criterion = "BIC"
+)
+
+plot_fit(x, y, series, t, name_group_var = NULL, tuned_plmm)
+```
+
+Only one figure is displyed now since there is no grouping variable.
 
 You'll still need to render `README.Rmd` regularly, to keep `README.md` up-to-date. `devtools::build_readme()` is handy for this.
-
-You can also embed plots, for example:
-
-```{r pressure, echo = FALSE}
-plot(pressure)
-```
-
-In that case, don't forget to commit and push the resulting figure files, so they display on GitHub and CRAN.
