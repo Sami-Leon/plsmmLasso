@@ -220,7 +220,7 @@ test_f_results <- test_f(x, y, series, t,
 
 <img src="man/figures/README-unnamed-chunk-9-1.png" width="100%" />
 
-## Example II: Flexibility of the model
+## Example II: Flexibility of the Model
 
 ### Model fitting without group-specific nonlinear functions
 

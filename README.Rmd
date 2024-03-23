@@ -154,7 +154,7 @@ test_f_results <- test_f(x, y, series, t,
 )
 ```
 
-## Example II: Flexibility of the model
+## Example II: Flexibility of the Model
 
 ### Model fitting without group-specific nonlinear functions
 
