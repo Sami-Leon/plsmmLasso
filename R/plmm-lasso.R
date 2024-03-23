@@ -28,7 +28,7 @@ init_params <- function(y, series) {
   su <- stats::var(c(y_series_means), na.rm = TRUE)
   se <- stats::var(y, na.rm = TRUE) - su
   sr <- se / su
-  invisible(list(sr = sr, se = se))
+  return(list(sr = sr, se = se))
 }
 
 E_step <- function(x, y, series, f_fit, sr, ni, theta) {
@@ -48,7 +48,7 @@ E_step <- function(x, y, series, f_fit, sr, ni, theta) {
     phi = c(t(phi))
   )
 
-  invisible(df_phi)
+  return(df_phi)
 }
 
 M_step_standard_error <- function(x, y, f_fit, sr, se, phi, ni, theta) {
@@ -147,7 +147,7 @@ joint_lasso <- function(x, y, t, name_group_var, bases, se, gamma,
 
   selected_functions <- which(alpha != 0)
 
-  invisible(list(
+  return(list(
     out_f = out_f, selected_functions = selected_functions, alpha = alpha,
     theta = theta, x_fit = x_fit
   ))
