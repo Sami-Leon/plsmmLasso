@@ -6,15 +6,16 @@
 <!-- badges: start -->
 
 [![R-CMD-check](https://github.com/Sami-Leon/plsmmLasso/actions/workflows/R-CMD-check.yaml/badge.svg)](https://github.com/Sami-Leon/plsmmLasso/actions/workflows/R-CMD-check.yaml)
+
 <!-- badges: end -->
 
-The goal of plsmmLasso is to allow the estimation of a Regularized
-Partial Linear Semiparametric Mixed-Effects Model (PLSMM) using a
-dictionary approach for modeling the nonparametric component of the
-model. Using a set of bases functions the model automatically select the
-bases functions using a lasso penalty and perform variable selection
-with another lasso penalty on the fixed-effects. The implementation
-allow for the incorporation of a random intercept as well.
+The objective of plsmmLasso is to facilitate the estimation of a
+Regularized Partial Linear Semiparametric Mixed-Effects Model (PLSMM)
+through a dictionary approach for modeling the nonparametric component.
+The model employs a set of bases functions and automatically selects
+them using a lasso penalty. Additionally, it conducts variable selection
+on the fixed-effects using another lasso penalty. The implementation
+also supports the inclusion of a random intercept.
 
 ## Installation
 
@@ -26,13 +27,14 @@ You can install the development version of plsmmLasso from
 devtools::install_github("Sami-Leon/plsmmLasso")
 ```
 
-## Example I
+## Example I: A Guide to Fitting, Visualization, and Inference
 
 ### Fitting the model
 
-This is a basic example using a simulated dataset to show how to use the
-main function of the plsmmLasso package. Here we assume a grouping
-variable and different nonlinear functions for each group.
+Here’s a basic example using a simulated dataset to demonstrate how to
+utilize the main functions of the plsmmLasso package. This example
+assumes an effect of a grouping variable and different nonlinear
+functions for each group.
 
 ``` r
 library(plsmmLasso)
@@ -55,18 +57,18 @@ t <- sim$t
 bases <- create_bases(t)
 lambda <- 0.0046
 gamma <- 0.00001
-plmm_output <- plmm_lasso(x, y, series, t,
+plsmm_output <- plsmm_lasso(x, y, series, t,
   name_group_var = "group", bases$bases,
   gamma = gamma, lambda = lambda, timexgroup = TRUE,
   criterion = "BIC"
 )
 ```
 
-One the most important output of the object plmm_output are the
-estimates of the fixed-effects.
+One of the most important output of the function is the estimates of the
+fixed-effects.
 
 ``` r
-plmm_output$lasso_output$theta
+plsmm_output$lasso_output$theta
 #>  Intercept      group         x1         x2         x3         x4         x5 
 #> 0.19729689 3.15155151 1.91905369 0.74891414 0.02274130 0.01291499 0.01049015
 ```
@@ -75,14 +77,16 @@ Here we see that some covariates have small values, but most are
 non-zeros. If we want more regularization for the fixed-effects we can
 use a larger value for lambda.
 
+### Hyperparameter tuning
+
 ``` r
 lambda <- 0.1
-plmm_output <- plmm_lasso(x, y, series, t,
+plsmm_output <- plsmm_lasso(x, y, series, t,
   name_group_var = "group", bases$bases,
   gamma = gamma, lambda = lambda, timexgroup = TRUE,
   criterion = "BIC"
 )
-plmm_output$lasso_output$theta
+plsmm_output$lasso_output$theta
 #> Intercept     group        x1        x2        x3        x4        x5 
 #> 3.5544003 0.4262652 0.0000000 0.0000000 0.0000000 0.0000000 0.0000000
 ```
@@ -91,7 +95,7 @@ With a larger lasso penalty more coefficients are set to zero. The
 coefficients associated to the nonlinear functions are alpha.
 
 ``` r
-head(plmm_output$lasso_output$alpha)
+head(plsmm_output$lasso_output$alpha)
 #> [1] -5.576108e-02 -4.720350e-01 -8.130512e-03  2.368476e-10 -7.129181e-06
 #> [6]  0.000000e+00
 ```
@@ -100,23 +104,23 @@ Similar behavior would be observe for the alphas if we were to increase
 the value of gamma.
 
 To find optimal values for gamma and lambda we tune these
-hyperparameters using BIC-type criteria using the tune_plmm function and
-a grid search.
+hyperparameters using BIC-type criteria using the tune_plsmm function
+and a grid search.
 
 ``` r
 lambdas <- gammas <- round(exp(seq(log(1), log(1 * 0.00001),
               length.out = 5
 )), digits = 5)
 
-tuned_plmm <- tune_plmm(x, y, series, t,
+tuned_plsmm <- tune_plsmm(x, y, series, t,
                        name_group_var = "group", bases$bases,
                        gamma_vec = gammas, lambda_vec = lambdas, timexgroup = TRUE,
                        criterion = "BIC"
 )
 ```
 
-The function tuned_plmm tries every possible combination of the values
-from lambdas and gamma and returns the model with the best BIC. This
+The function tuned_plsmm tries every possible combination of the values
+from lambdas and gammas and returns the model with the best BIC. This
 example is for illustration only, in practice a more exhaustive grid
 should be used.
 
@@ -128,25 +132,25 @@ default only the observed time points are being used, to use predicted
 time points the argument predicted can be set to TRUE.
 
 ``` r
-plot_fit(x, y, series, t, name_group_var = "group", tuned_plmm)
+plot_fit(x, y, series, t, name_group_var = "group", tuned_plsmm)
 ```
 
 <img src="man/figures/README-unnamed-chunk-6-1.png" width="100%" /><img src="man/figures/README-unnamed-chunk-6-2.png" width="100%" />
 
 ``` r
 
-plot_fit(x, y, series, t, name_group_var = "group", tuned_plmm, predicted = TRUE)
+plot_fit(x, y, series, t, name_group_var = "group", tuned_plsmm, predicted = TRUE)
 ```
 
 <img src="man/figures/README-unnamed-chunk-6-3.png" width="100%" /><img src="man/figures/README-unnamed-chunk-6-4.png" width="100%" />
 
 ### Post-selection inference
 
-To compute p-values on the fixed-effects the function debias_plmm can be
-used.
+To compute p-values on the fixed-effects the function debias_plsmm can
+be used.
 
 ``` r
-debias_plmm(x, y, series, tuned_plmm)
+debias_plsmm(x, y, series, tuned_plsmm)
 #>         Estimate   Debiased Std. Error   Lower 95% Upper 95%      p-value
 #> group 3.20441442 3.31447827 0.33608394  2.65575376 3.9732028 6.079223e-23
 #> x1    1.95569696 2.03694234 0.21339004  1.61869786 2.4551868 1.352832e-21
@@ -176,7 +180,7 @@ be found in the second element of the output list.
 
 ``` r
 test_f_results <- test_f(x, y, series, t,
- name_group_var = "group", tuned_plmm,
+ name_group_var = "group", tuned_plsmm,
  n_boot = 10
 )
 #>   |                                                                              |                                                                      |   0%  |                                                                              |=======                                                               |  10%  |                                                                              |==============                                                        |  20%  |                                                                              |=====================                                                 |  30%  |                                                                              |============================                                          |  40%  |                                                                              |===================================                                   |  50%  |                                                                              |==========================================                            |  60%  |                                                                              |=================================================                     |  70%  |                                                                              |========================================================              |  80%  |                                                                              |===============================================================       |  90%  |                                                                              |======================================================================| 100%
@@ -205,7 +209,7 @@ function of time rather than at the observed time points only.
 
 ``` r
 test_f_results <- test_f(x, y, series, t,
- name_group_var = "group", tuned_plmm,
+ name_group_var = "group", tuned_plsmm,
  n_boot = 10, predicted = TRUE
 )
 #>   |                                                                              |                                                                      |   0%  |                                                                              |=======                                                               |  10%  |                                                                              |==============                                                        |  20%  |                                                                              |=====================                                                 |  30%  |                                                                              |============================                                          |  40%  |                                                                              |===================================                                   |  50%  |                                                                              |==========================================                            |  60%  |                                                                              |=================================================                     |  70%  |                                                                              |========================================================              |  80%  |                                                                              |===============================================================       |  90%  |                                                                              |======================================================================| 100%
@@ -214,7 +218,9 @@ test_f_results <- test_f(x, y, series, t,
 
 <img src="man/figures/README-unnamed-chunk-9-1.png" width="100%" />
 
-## Example II
+## Example II: Flexibility of the …
+
+### Model fitting without group-specific nonlinear functions
 
 The model is flexible and if the nonlinear functions do not appear to be
 different the argument timexgroup can be set to FALSE. Here we simulate
@@ -237,13 +243,13 @@ y <- sim$y
 series <- sim$series
 t <- sim$t
 bases <- create_bases(t)
-tuned_plmm <- tune_plmm(x, y, series, t,
+tuned_plsmm <- tune_plsmm(x, y, series, t,
                        name_group_var = "group", bases$bases,
                        gamma_vec = gammas, lambda_vec = lambdas, timexgroup = FALSE,
                        criterion = "BIC"
 )
 
-plot_fit(x, y, series, t, name_group_var = "group", tuned_plmm)
+plot_fit(x, y, series, t, name_group_var = "group", tuned_plsmm)
 ```
 
 <img src="man/figures/README-unnamed-chunk-10-1.png" width="100%" /><img src="man/figures/README-unnamed-chunk-10-2.png" width="100%" />
@@ -251,6 +257,8 @@ plot_fit(x, y, series, t, name_group_var = "group", tuned_plmm)
 As we can see now the estimates of the nonlinear functions are the same.
 It is also possible not to use any grouping variable for the
 name_group_var argument.
+
+### Model fitting without grouping variable
 
 Here we simulate a data that does not have an effect of a grouping
 variable (no difference in height of the overall mean trajectories) and
@@ -272,13 +280,13 @@ y <- sim$y
 series <- sim$series
 t <- sim$t
 bases <- create_bases(t)
-tuned_plmm <- tune_plmm(x, y, series, t,
+tuned_plsmm <- tune_plsmm(x, y, series, t,
                        name_group_var = NULL, bases$bases,
                        gamma_vec = gammas, lambda_vec = lambdas, timexgroup = FALSE,
                        criterion = "BIC"
 )
 
-plot_fit(x, y, series, t, name_group_var = NULL, tuned_plmm)
+plot_fit(x, y, series, t, name_group_var = NULL, tuned_plsmm)
 ```
 
 <img src="man/figures/README-unnamed-chunk-11-1.png" width="100%" /><img src="man/figures/README-unnamed-chunk-11-2.png" width="100%" />

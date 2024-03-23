@@ -1,12 +1,12 @@
-#' Post-selection inference for PLMM
+#' Post-selection inference for PLSMM
 #'
-#' This function debias the lasso coefficients estimated from the \code{\link{plmm_lasso}} function 
+#' This function debias the lasso coefficients estimated from the \code{\link{plsmm_lasso}} function 
 #' and computes p-values.
 #' 
 #' @param x A matrix of predictor variables.
 #' @param y A continuous vector of response variable.
 #' @param series A variable representing different series or groups in the data modeled as a random intercept.
-#' @param plmm_output Output object obtained from the \code{\link{plmm_lasso}} function.
+#' @param plsmm_output Output object obtained from the \code{\link{plsmm_lasso}} function.
 #' @param a A scalar that adjusts the variance of the random intercept \eqn{\phi} by \eqn{a \times \sigma_{\phi}}, default is 1.
 #' @param Z (Optional) Pre-computed correction score matrix. If provided, it will be used directly for debiasing.
 #' 
@@ -30,23 +30,23 @@
 #' bases = create_bases(t)
 #' lambda <- 0.0046
 #' gamma <- 0.00000001
-#' plmm_output <- plmm_lasso(x, y, series, t,
+#' plsmm_output <- plsmm_lasso(x, y, series, t,
 #'   name_group_var = "group", bases$bases,
 #'   gamma = gamma, lambda = lambda, timexgroup = TRUE,
 #'   criterion = "BIC"
 #' )
-#' debias_plmm(x, y, series, plmm_output)
+#' debias_plsmm(x, y, series, plsmm_output)
 #' 
 #' 
 #' @export
-debias_plmm <- function(x, y, series, plmm_output, a = 1, Z = NULL) {
-  y_offset <- y - plmm_output$lasso_output$out_f$f_fit
+debias_plsmm <- function(x, y, series, plsmm_output, a = 1, Z = NULL) {
+  y_offset <- y - plsmm_output$lasso_output$out_f$f_fit
 
   series <- as.factor(series)
 
   z <- stats::model.matrix(~ series - 1)
 
-  Sigma_a <- a * plmm_output$su * z %*% t(z) + plmm_output$se * diag(rep(1, length(y_offset)))
+  Sigma_a <- a * plsmm_output$su * z %*% t(z) + plsmm_output$se * diag(rep(1, length(y_offset)))
 
   Sigma_a_svd <- svd(Sigma_a)
   Sigma_a_sqrt_inv <- Sigma_a_svd$u %*% diag(1 / sqrt(Sigma_a_svd$d)) %*% t(Sigma_a_svd$u)
@@ -65,7 +65,7 @@ debias_plmm <- function(x, y, series, plmm_output, a = 1, Z = NULL) {
     debias_score_matrix <- Z
   }
   # removing intercept
-  beta_original <- plmm_output$lasso_output$theta[-1] 
+  beta_original <- plsmm_output$lasso_output$theta[-1] 
 
   res <- y_a - x_a %*% beta_original
 

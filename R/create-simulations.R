@@ -11,7 +11,7 @@ cst_cor <- function(n, rho) {
   return(m)
 }
 
-#' Simulate PLMM
+#' Simulate PLSMM
 #'
 #' Simulate a partial linear mixed-effects model.
 #'

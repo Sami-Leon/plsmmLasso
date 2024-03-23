@@ -1,14 +1,14 @@
-#' Visualization of estimated mean trajectories and nonlinear functions from a PLMM
+#' Visualization of estimated mean trajectories and nonlinear functions from a PLSMM
 #'
 #' This function plots the observed data, the estimated mean trajectories, and
-#' the estimated nonlinear functions from the output of \code{\link{plmm_lasso}}.
+#' the estimated nonlinear functions from the output of \code{\link{plsmm_lasso}}.
 #'
 #' @param x A matrix of predictors.
 #' @param y A continuous vector of response variable.
 #' @param series A variable representing different series or groups in the data modeled as a random intercept.
 #' @param t A numeric vector indicating the time points.
 #' @param name_group_var A character string specifying the name of the grouping variable.
-#' @param plmm_output Output object obtained from the \code{\link{plmm_lasso}} function.
+#' @param plsmm_output Output object obtained from the \code{\link{plsmm_lasso}} function.
 #' @param predicted Logical indicating whether to plot predicted values. If \code{FALSE} only the observed time points are used.
 #'
 #' @return Two plots:
@@ -16,7 +16,7 @@
 #'   - The second plot shows the estimated nonlinear functions.
 #'
 #' @details
-#' If \code{predicted} is \code{TRUE} the function uses the model from \code{plmm_output} to predict unobserved time points on a continuous grid of time.
+#' If \code{predicted} is \code{TRUE} the function uses the model from \code{plsmm_output} to predict unobserved time points on a continuous grid of time.
 #'
 #' @examples
 #'
@@ -35,22 +35,22 @@
 #' bases <- create_bases(t)
 #' lambda <- 0.0046
 #' gamma <- 0.00000001
-#' plmm_output <- plmm_lasso(x, y, series, t,
+#' plsmm_output <- plsmm_lasso(x, y, series, t,
 #'   name_group_var = "group", bases$bases,
 #'   gamma = gamma, lambda = lambda, timexgroup = TRUE,
 #'   criterion = "BIC"
 #' )
-#' plot_fit(x, y, series, t, name_group_var = "group", plmm_output)
+#' plot_fit(x, y, series, t, name_group_var = "group", plsmm_output)
 #'
 #' @importFrom rlang .data
 #' @export
 plot_fit <- function(x, y, series, t, name_group_var,
-                     plmm_output, predicted = FALSE) {
+                     plsmm_output, predicted = FALSE) {
   data <- data.frame(y, series, t, x)
 
-  data$f_fit <- plmm_output$lasso_output$out_f$f_fit
-  data$x_fit <- plmm_output$lasso_output$x_fit
-  data$phi <- rep(plmm_output$out_phi$phi, table(data$series))
+  data$f_fit <- plsmm_output$lasso_output$out_f$f_fit
+  data$x_fit <- plsmm_output$lasso_output$x_fit
+  data$phi <- rep(plsmm_output$out_phi$phi, table(data$series))
 
   bases_functions <- create_bases(t)
 
@@ -62,19 +62,19 @@ plot_fit <- function(x, y, series, t, name_group_var,
     c(t_cont, t_cont),
     c(f_predict(
       t = t_cont,
-      coef = plmm_output$lasso_output$alpha, group = plmm_output$lasso_output$out_f$group[1],
+      coef = plsmm_output$lasso_output$alpha, group = plsmm_output$lasso_output$out_f$group[1],
       keep = bases_functions$selected_bases
     ) - mean(f_predict(
       t = t_obs,
-      coef = plmm_output$lasso_output$alpha, group = plmm_output$lasso_output$out_f$group[1],
+      coef = plsmm_output$lasso_output$alpha, group = plsmm_output$lasso_output$out_f$group[1],
       keep = bases_functions$selected_bases
     )), f_predict(
       t = t_cont,
-      coef = plmm_output$lasso_output$alpha, group = 1 - plmm_output$lasso_output$out_f$group[1],
+      coef = plsmm_output$lasso_output$alpha, group = 1 - plsmm_output$lasso_output$out_f$group[1],
       keep = bases_functions$selected_bases
     ) - mean(f_predict(
       t = t_obs,
-      coef = plmm_output$lasso_output$alpha, group = 1 - plmm_output$lasso_output$out_f$group[1],
+      coef = plsmm_output$lasso_output$alpha, group = 1 - plsmm_output$lasso_output$out_f$group[1],
       keep = bases_functions$selected_bases
     ))),
     c(rep(0, length(t_cont)), rep(1, length(t_cont)))

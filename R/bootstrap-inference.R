@@ -153,7 +153,7 @@ create_CI <- function(list_diff_CI, data, min_lambda) {
   return(CI_diff_f)
 }
 
-L2_test_f <- function(list_fitted_boot, plmm_output) {
+L2_test_f <- function(list_fitted_boot, plsmm_output) {
   df_list_fit <- lapply(seq_along(list_fitted_boot), function(i) {
     df <- list_fitted_boot[[i]]$out_f
     df$boot <- as.character(i)
@@ -162,7 +162,7 @@ L2_test_f <- function(list_fitted_boot, plmm_output) {
   
   diff_list <- lapply(df_list_fit, calc_f_diff)
   
-  T_obs <- sum((calc_f_diff(plmm_output$lasso_output$out_f)$diff)^2)
+  T_obs <- sum((calc_f_diff(plsmm_output$lasso_output$out_f)$diff)^2)
   T_boot <- sapply(diff_list, function(x) {
     sum(x$diff^2)
   })
@@ -189,7 +189,7 @@ L2_test_f <- function(list_fitted_boot, plmm_output) {
 #' @param series A variable representing different series or groups in the data modeled as a random intercept.
 #' @param t A numeric vector indicating the time points.
 #' @param name_group_var A character string specifying the name of the grouping variable.
-#' @param plmm_output Output object obtained from the \code{\link{plmm_lasso}} function.
+#' @param plsmm_output Output object obtained from the \code{\link{plsmm_lasso}} function.
 #' @param n_boot Numeric specifying the number of bootstrap samples (default is 1000).
 #' @param predicted Logical indicating whether to plot predicted values. If \code{FALSE} only the observed time points are used.
 #'
@@ -221,14 +221,14 @@ L2_test_f <- function(list_fitted_boot, plmm_output) {
 #' bases <- create_bases(t)
 #' lambda <- 0.0046
 #' gamma <- 0.00000001
-#' plmm_output <- plmm_lasso(x, y, series, t,
+#' plsmm_output <- plsmm_lasso(x, y, series, t,
 #'   name_group_var = "group", bases$bases,
 #'   gamma = gamma, lambda = lambda, timexgroup = TRUE,
 #'   criterion = "BIC"
 #' )
 # Note: For illustration purposes only, set n_boot to at least 1000 for reliable results.
 #'test_f_results <- test_f(x, y, series, t,
-#'  name_group_var = "group", plmm_output,
+#'  name_group_var = "group", plsmm_output,
 #'  n_boot = 10
 #')
 #' test_f_results[[1]]
@@ -237,22 +237,22 @@ L2_test_f <- function(list_fitted_boot, plmm_output) {
 #'
 #' @importFrom rlang .data
 #' @export
-test_f <- function(x, y, series, t, name_group_var, plmm_output, n_boot = 1000,
+test_f <- function(x, y, series, t, name_group_var, plsmm_output, n_boot = 1000,
                    predicted = FALSE) {
 
-  f0 <- plmm_output$lasso_output$out_f[plmm_output$lasso_output$out_f$group == 0, ]
+  f0 <- plsmm_output$lasso_output$out_f[plsmm_output$lasso_output$out_f$group == 0, ]
   f0 <- f0[!duplicated(f0$t), ]
   f0 <- f0[order(f0$t), ]
 
-  f1 <- plmm_output$lasso_output$out_f[plmm_output$lasso_output$out_f$group == 1, ]
+  f1 <- plsmm_output$lasso_output$out_f[plsmm_output$lasso_output$out_f$group == 1, ]
   f1 <- f1[!duplicated(f1$t), ]
   f1 <- f1[order(f1$t), ]
 
   if (identical(f1$f_fit, f0$f_fit)) {
-    stop("The nonlinear functions are equal in the plmm_output. The test is irrelevant in this case. Try running plmm_lasso with timexgroup = TRUE")
+    stop("The nonlinear functions are equal in the plsmm_output. The test is irrelevant in this case. Try running plsmm_lasso with timexgroup = TRUE")
   }
   
-  y <- y - plmm_output$lasso_output$x_fit - rep(plmm_output$out_phi$phi, plmm_output$ni)
+  y <- y - plsmm_output$lasso_output$x_fit - rep(plsmm_output$out_phi$phi, plsmm_output$ni)
 
   t_obs <- sort(unique(t))
 
@@ -277,7 +277,7 @@ test_f <- function(x, y, series, t, name_group_var, plmm_output, n_boot = 1000,
 
   overall_test_results <- L2_test_f(
     list_fitted_boot = fitted_boot,
-    plmm_output = plmm_output
+    plsmm_output = plsmm_output
   )
 
   predicted_f <- lapply(1:length(fitted_boot), function(i) {

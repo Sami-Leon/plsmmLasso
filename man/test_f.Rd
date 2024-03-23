@@ -10,7 +10,7 @@ test_f(
   series,
   t,
   name_group_var,
-  plmm_output,
+  plsmm_output,
   n_boot = 1000,
   predicted = FALSE
 )
@@ -26,7 +26,7 @@ test_f(
 
 \item{name_group_var}{A character string specifying the name of the grouping variable.}
 
-\item{plmm_output}{Output object obtained from the \code{\link{plmm_lasso}} function.}
+\item{plsmm_output}{Output object obtained from the \code{\link{plsmm_lasso}} function.}
 
 \item{n_boot}{Numeric specifying the number of bootstrap samples (default is 1000).}
 
@@ -64,13 +64,13 @@ t <- sim$t
 bases <- create_bases(t)
 lambda <- 0.0046
 gamma <- 0.00000001
-plmm_output <- plmm_lasso(x, y, series, t,
+plsmm_output <- plsmm_lasso(x, y, series, t,
   name_group_var = "group", bases$bases,
   gamma = gamma, lambda = lambda, timexgroup = TRUE,
   criterion = "BIC"
 )
 test_f_results <- test_f(x, y, series, t,
- name_group_var = "group", plmm_output,
+ name_group_var = "group", plsmm_output,
  n_boot = 10
 )
 test_f_results[[1]]

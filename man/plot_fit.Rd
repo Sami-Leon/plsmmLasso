@@ -2,9 +2,9 @@
 % Please edit documentation in R/plot-fit.R
 \name{plot_fit}
 \alias{plot_fit}
-\title{Visualization of estimated mean trajectories and nonlinear functions from a PLMM}
+\title{Visualization of estimated mean trajectories and nonlinear functions from a PLSMM}
 \usage{
-plot_fit(x, y, series, t, name_group_var, plmm_output, predicted = FALSE)
+plot_fit(x, y, series, t, name_group_var, plsmm_output, predicted = FALSE)
 }
 \arguments{
 \item{x}{A matrix of predictors.}
@@ -17,7 +17,7 @@ plot_fit(x, y, series, t, name_group_var, plmm_output, predicted = FALSE)
 
 \item{name_group_var}{A character string specifying the name of the grouping variable.}
 
-\item{plmm_output}{Output object obtained from the \code{\link{plmm_lasso}} function.}
+\item{plsmm_output}{Output object obtained from the \code{\link{plsmm_lasso}} function.}
 
 \item{predicted}{Logical indicating whether to plot predicted values. If \code{FALSE} only the observed time points are used.}
 }
@@ -30,10 +30,10 @@ Two plots:
 }
 \description{
 This function plots the observed data, the estimated mean trajectories, and
-the estimated nonlinear functions from the output of \code{\link{plmm_lasso}}.
+the estimated nonlinear functions from the output of \code{\link{plsmm_lasso}}.
 }
 \details{
-If \code{predicted} is \code{TRUE} the function uses the model from \code{plmm_output} to predict unobserved time points on a continuous grid of time.
+If \code{predicted} is \code{TRUE} the function uses the model from \code{plsmm_output} to predict unobserved time points on a continuous grid of time.
 }
 \examples{
 
@@ -52,11 +52,11 @@ t <- sim$t
 bases <- create_bases(t)
 lambda <- 0.0046
 gamma <- 0.00000001
-plmm_output <- plmm_lasso(x, y, series, t,
+plsmm_output <- plsmm_lasso(x, y, series, t,
   name_group_var = "group", bases$bases,
   gamma = gamma, lambda = lambda, timexgroup = TRUE,
   criterion = "BIC"
 )
-plot_fit(x, y, series, t, name_group_var = "group", plmm_output)
+plot_fit(x, y, series, t, name_group_var = "group", plsmm_output)
 
 }

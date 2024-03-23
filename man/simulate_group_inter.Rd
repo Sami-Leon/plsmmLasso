@@ -2,7 +2,7 @@
 % Please edit documentation in R/create-simulations.R
 \name{simulate_group_inter}
 \alias{simulate_group_inter}
-\title{Simulate PLMM}
+\title{Simulate PLSMM}
 \usage{
 simulate_group_inter(
   N = 50,

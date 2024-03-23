@@ -153,9 +153,9 @@ joint_lasso <- function(x, y, t, name_group_var, bases, se, gamma,
   ))
 }
 
-#' Fit a high-dimensional PLMM
+#' Fit a high-dimensional PLSMM
 #'
-#' Fits a partial linear mixed effects model (PLMM) via penalized maximum likelihood.
+#' Fits a partial linear mixed effects model (PLSMM) via penalized maximum likelihood.
 #'
 #' @param x A matrix of predictor variables.
 #' @param y A continuous vector of response variable.
@@ -211,33 +211,33 @@ joint_lasso <- function(x, y, t, name_group_var, bases, se, gamma,
 #' bases <- create_bases(t)
 #' lambda <- 0.0046
 #' gamma <- 0.00000001
-#' plmm_output <- plmm_lasso(x, y, series, t,
+#' plsmm_output <- plsmm_lasso(x, y, series, t,
 #'   name_group_var = "group", bases$bases,
 #'   gamma = gamma, lambda = lambda, timexgroup = TRUE,
 #'   criterion = "BIC"
 #' )
 #' # fixed effect coefficients
-#' plmm_output$lasso_output$theta
+#' plsmm_output$lasso_output$theta
 #' 
 #' # fixed effect fitted values
-#' plmm_output$lasso_output$x_fit
+#' plsmm_output$lasso_output$x_fit
 #' 
 #' # nonlinear functions coefficients
-#' plmm_output$lasso_output$alpha
+#' plsmm_output$lasso_output$alpha
 #'
 #'# nonlinear functions fitted values
-#'plmm_output$lasso_output$out_f
+#'plsmm_output$lasso_output$out_f
 #'
 #' # standard deviation of residuals
-#' plmm_output$se
+#' plsmm_output$se
 #' 
 #' # standard deviation of random intercept
-#' plmm_output$su
+#' plsmm_output$su
 #' 
 #' # series specific random intercept
-#' plmm_output$out_phi
+#' plsmm_output$out_phi
 #' @export
-plmm_lasso <- function(x, y, series, t, name_group_var = NULL, bases,
+plsmm_lasso <- function(x, y, series, t, name_group_var = NULL, bases,
                        gamma, lambda, timexgroup, criterion, cvg_tol = 0.001,
                        max_iter = 100, verbose = FALSE) {
   # Check if x is a matrix
