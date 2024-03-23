@@ -163,7 +163,7 @@ debias_plsmm(x, y, series, tuned_plsmm)
 ```
 
 The function reports the original coefficients, debiased coefficients,
-standard error, confidence intervals and p-values. These p-values are
+standard errors, confidence intervals and p-values. These p-values are
 already adjusted for the selection process of the lasso, and provide
 valid inference.
 
