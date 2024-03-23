@@ -73,8 +73,8 @@ plsmm_output$lasso_output$theta
 #> 0.19729689 3.15155151 1.91905369 0.74891414 0.02274130 0.01291499 0.01049015
 ```
 
-Here we see that some covariates have small values, but most are
-non-zeros. If we want more regularization for the fixed-effects we can
+Here, we observe that some covariates have small values, but most are
+non-zero. If we desire more regularization for the fixed-effects, we can
 use a larger value for lambda.
 
 ### Hyperparameter tuning
@@ -91,8 +91,10 @@ plsmm_output$lasso_output$theta
 #> 3.5544003 0.4262652 0.0000000 0.0000000 0.0000000 0.0000000 0.0000000
 ```
 
-With a larger lasso penalty more coefficients are set to zero. The
-coefficients associated to the nonlinear functions are alpha.
+With a larger lasso penalty, more coefficients are set to zero.
+
+The coefficients associated with the nonlinear functions are denoted by
+alpha.
 
 ``` r
 head(plsmm_output$lasso_output$alpha)
@@ -100,11 +102,11 @@ head(plsmm_output$lasso_output$alpha)
 #> [6]  0.000000e+00
 ```
 
-Similar behavior would be observe for the alphas if we were to increase
-the value of gamma.
+Similar behavior would be observed for the alpha values if we were to
+increase the value of gamma.
 
-To find optimal values for gamma and lambda we tune these
-hyperparameters using BIC-type criteria using the tune_plsmm function
+To find optimal values for gamma and lambda, we tune these
+hyperparameters using BIC-type criteria with the `tune_plsmm()` function
 and a grid search.
 
 ``` r
@@ -119,17 +121,17 @@ tuned_plsmm <- tune_plsmm(x, y, series, t,
 )
 ```
 
-The function tuned_plsmm tries every possible combination of the values
-from lambdas and gammas and returns the model with the best BIC. This
-example is for illustration only, in practice a more exhaustive grid
-should be used.
+The `tune_plsmm()` function tries every possible combination of the
+values from lambdas and gammas and returns the model with the best BIC
+(other options are BICC and EBIC). This example is for illustration
+purposes only; in practice, a more exhaustive grid should be used.
 
 ### Plotting the results
 
-The function plot_fit allows for the vizualisation of the estimated mean
-trajectories as well as the estimate of the nonlinear functions. By
-default only the observed time points are being used, to use predicted
-time points the argument predicted can be set to TRUE.
+The `plot_fit()` function allows for the visualization of the estimated
+mean trajectories as well as the estimate of the nonlinear functions. By
+default, only the observed time points are being used. To use continuous
+time points, the argument `predicted` can be set to `TRUE`.
 
 ``` r
 plot_fit(x, y, series, t, name_group_var = "group", tuned_plsmm)
@@ -146,8 +148,8 @@ plot_fit(x, y, series, t, name_group_var = "group", tuned_plsmm, predicted = TRU
 
 ### Post-selection inference
 
-To compute p-values on the fixed-effects the function debias_plsmm can
-be used.
+To compute p-values on the fixed-effects, the `debias_plsmm()` function
+can be used.
 
 ``` r
 debias_plsmm(x, y, series, tuned_plsmm)
@@ -160,22 +162,22 @@ debias_plsmm(x, y, series, tuned_plsmm)
 #> x5    0.01569818 0.02732562 0.04056090 -0.05217374 0.1068250 5.005061e-01
 ```
 
-The function reports the original coefficients, debiased coeffcients,
+The function reports the original coefficients, debiased coefficients,
 standard error, confidence intervals and p-values. These p-values are
-already ajudsted for the selection process of the lasso, and provide
+already adjusted for the selection process of the lasso, and provide
 valid inference.
 
 ### Test on the nonlinear functions
 
-Finally we can perform some tests on the nonlinear functions. The first
-element of the list is an overall test of equality, if the p-value is
-$<0.05$ we reject the null hypothesis of equality, and conclude that
+Finally, we can perform tests on the nonlinear functions. The first
+element of the list is an overall test of equality. If the p-value is
+$< 0.05$, we reject the null hypothesis of equality and conclude that
 overall the two nonlinear functions are different. To obtain a
-comparison at each time point confidence bands are computed, and a
+comparison at each time point, confidence bands are computed, and a
 figure displaying these confidence bands is generated. For the time
-points associated with confidence bands that include $0$ we can not
+points associated with confidence bands that include $0$, we cannot
 reject the null hypothesis that the nonlinear functions are the same for
-this time point. The data.frame that is used to generate this figure can
+this time point. The data frame that is used to generate this figure can
 be found in the second element of the output list.
 
 ``` r
@@ -203,8 +205,8 @@ head(test_f_results[[2]])
 #> 6 0.5 0.2539394 0.02872971 0.4554919
 ```
 
-Similarly than for the plot_fit function the argument predicted can be
-changed to TRUE, to display the joint confidence bands as a continuous
+Similarly to the `plot_fit()` function, the argument `predicted` can be
+changed to `TRUE` to display the joint confidence bands as a continuous
 function of time rather than at the observed time points only.
 
 ``` r
@@ -218,16 +220,17 @@ test_f_results <- test_f(x, y, series, t,
 
 <img src="man/figures/README-unnamed-chunk-9-1.png" width="100%" />
 
-## Example II: Flexibility of the …
+## Example II: Flexibility of the model
 
 ### Model fitting without group-specific nonlinear functions
 
-The model is flexible and if the nonlinear functions do not appear to be
-different the argument timexgroup can be set to FALSE. Here we simulate
-a data where the nonlinear functions are the same, and fit the data
-accordingly
+The plsmmLasso package offers flexibility; if the nonlinear functions do
+not differ between groups, the `timexgroup` argument can be set to
+`FALSE`. Below, we simulate a dataset where the nonlinear functions are
+the same and fit the data accordingly.
 
 ``` r
+# Simulate a dataset with equal nonlinear functions per group
 set.seed(123)
 data_sim <- simulate_group_inter(
   N = 50, n_mvnorm = 3, grouped = TRUE,
@@ -254,17 +257,17 @@ plot_fit(x, y, series, t, name_group_var = "group", tuned_plsmm)
 
 <img src="man/figures/README-unnamed-chunk-10-1.png" width="100%" /><img src="man/figures/README-unnamed-chunk-10-2.png" width="100%" />
 
-As we can see now the estimates of the nonlinear functions are the same.
-It is also possible not to use any grouping variable for the
-name_group_var argument.
+As observed, the estimates of the nonlinear functions are identical.
 
 ### Model fitting without grouping variable
 
-Here we simulate a data that does not have an effect of a grouping
-variable (no difference in height of the overall mean trajectories) and
-the same nonlinear functions.
+It is also possible not to use any grouping variable for the
+`name_group_var` argument. Here, we simulate a dataset without the
+effect of a grouping variable, resulting in no difference in the height
+of the overall mean trajectories and using the same nonlinear functions.
 
 ``` r
+# Simulate a dataset with no group effect
 set.seed(123)
 data_sim <- simulate_group_inter(
   N = 50, n_mvnorm = 3, grouped = FALSE,
@@ -291,4 +294,4 @@ plot_fit(x, y, series, t, name_group_var = NULL, tuned_plsmm)
 
 <img src="man/figures/README-unnamed-chunk-11-1.png" width="100%" /><img src="man/figures/README-unnamed-chunk-11-2.png" width="100%" />
 
-Only one figure is displyed now since there is no grouping variable.
+Only one figure is displayed now since there is no grouping variable.
