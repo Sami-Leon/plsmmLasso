@@ -1,6 +1,6 @@
 Package: plsmmLasso
 Title: Variable Selection and Inference for Partial Semiparametric Linear Mixed-Effects Model
-Version: 0.0.0.9000
+Version: 1.0.0
 Authors@R: 
     person("Sami", "Leon", , "samileon@hotmail.fr", role = c("aut", "cre", "cph"),
            comment = c(ORCID = "https://orcid.org/0000-0001-9138-9450"))
