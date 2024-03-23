@@ -13,7 +13,7 @@ cst_cor <- function(n, rho) {
 
 #' Simulate PLSMM
 #'
-#' Simulate a partial linear mixed-effects model.
+#' Simulate a partial linear semiparametric mixed-effects model.
 #'
 #' @param N Number of subjects.
 #' @param n_mvnorm Number of covariate generates from a multivariate normal distribution.

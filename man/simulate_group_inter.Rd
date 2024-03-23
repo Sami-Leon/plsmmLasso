@@ -39,7 +39,7 @@ A list with three components:
 \item{f_val}{Values of the nonlinear functions.}
 }
 \description{
-Simulate a partial linear mixed-effects model.
+Simulate a partial linear semiparametric mixed-effects model.
 }
 \examples{
 

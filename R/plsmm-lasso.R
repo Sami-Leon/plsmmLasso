@@ -155,7 +155,7 @@ joint_lasso <- function(x, y, t, name_group_var, bases, se, gamma,
 
 #' Fit a high-dimensional PLSMM
 #'
-#' Fits a partial linear mixed effects model (PLSMM) via penalized maximum likelihood.
+#' Fits a partial linear semiparametric mixed effects model (PLSMM) via penalized maximum likelihood.
 #'
 #' @param x A matrix of predictor variables.
 #' @param y A continuous vector of response variable.
@@ -183,7 +183,7 @@ joint_lasso <- function(x, y, t, name_group_var, bases, se, gamma,
 #'   \item{crit}{Value of the selected information criterion.}
 #'
 #' @details
-#' This function fits a partial linear mixed effects model with a lasso penalty on the fixed effects
+#' This function fits a PLSMM with a lasso penalty on the fixed effects
 #' and the coefficient associated with the bases functions. It uses the Expectation-Maximization (EM) algorithm
 #' for estimation. The bases functions represent a nonlinear effect of time.
 #'

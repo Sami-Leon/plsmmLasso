@@ -60,10 +60,10 @@ A list containing the following components:
 \item{crit}{Value of the selected information criterion.}
 }
 \description{
-Fits a partial linear mixed effects model (PLSMM) via penalized maximum likelihood.
+Fits a partial linear semiparametric mixed effects model (PLSMM) via penalized maximum likelihood.
 }
 \details{
-This function fits a partial linear mixed effects model with a lasso penalty on the fixed effects
+This function fits a PLSMM with a lasso penalty on the fixed effects
 and the coefficient associated with the bases functions. It uses the Expectation-Maximization (EM) algorithm
 for estimation. The bases functions represent a nonlinear effect of time.
 

@@ -46,7 +46,7 @@ If \code{TRUE}, each group in \code{name_group_var} will have its own estimate o
 A PLSMM object representing the best-tuned model based on the specified criterion.
 }
 \description{
-This function tunes a penalized partial linear mixed-model (PLSMM) by performing a grid search
+This function tunes a penalized partial linear semiparametric mixed-model (PLSMM) by performing a grid search
 over a set of hyperparameters to find the best model based on a given criterion.
 }
 \details{
