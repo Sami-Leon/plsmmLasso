@@ -64,8 +64,8 @@ plsmm_output <- plsmm_lasso(x, y, series, t,
 )
 ```
 
-One of the most important output of the function is the estimates of the
-fixed-effects.
+One of the most important output of the `plsmm_lasso()` function is the
+estimates of the fixed-effects.
 
 ``` r
 plsmm_output$lasso_output$theta
