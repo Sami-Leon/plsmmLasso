@@ -185,7 +185,36 @@ test_f_results <- test_f(x, y, series, t,
  name_group_var = "group", tuned_plsmm,
  n_boot = 10
 )
-#>   |                                                                              |                                                                      |   0%
+#>   |                                                                              |                                                                      |   0%  |                                                                              |=======                                                               |  10%
+#> 
+#> Completed fitting Bootstrap samples. Now formatting results, and generating figure.
+#>   |                                                                              |==============                                                        |  20%
+#> 
+#> Completed fitting Bootstrap samples. Now formatting results, and generating figure.
+#>   |                                                                              |=====================                                                 |  30%
+#> 
+#> Completed fitting Bootstrap samples. Now formatting results, and generating figure.
+#>   |                                                                              |============================                                          |  40%
+#> 
+#> Completed fitting Bootstrap samples. Now formatting results, and generating figure.
+#>   |                                                                              |===================================                                   |  50%
+#> 
+#> Completed fitting Bootstrap samples. Now formatting results, and generating figure.
+#>   |                                                                              |==========================================                            |  60%
+#> 
+#> Completed fitting Bootstrap samples. Now formatting results, and generating figure.
+#>   |                                                                              |=================================================                     |  70%
+#> 
+#> Completed fitting Bootstrap samples. Now formatting results, and generating figure.
+#>   |                                                                              |========================================================              |  80%
+#> 
+#> Completed fitting Bootstrap samples. Now formatting results, and generating figure.
+#>   |                                                                              |===============================================================       |  90%
+#> 
+#> Completed fitting Bootstrap samples. Now formatting results, and generating figure.
+#>   |                                                                              |======================================================================| 100%
+#> 
+#> Completed fitting Bootstrap samples. Now formatting results, and generating figure.
 ```
 
 <img src="man/figures/README-unnamed-chunk-8-1.png" width="100%" />
@@ -213,7 +242,36 @@ test_f_results <- test_f(x, y, series, t,
  name_group_var = "group", tuned_plsmm,
  n_boot = 10, predicted = TRUE
 )
-#>   |                                                                              |                                                                      |   0%
+#>   |                                                                              |                                                                      |   0%  |                                                                              |=======                                                               |  10%
+#> 
+#> Completed fitting Bootstrap samples. Now formatting results, and generating figure.
+#>   |                                                                              |==============                                                        |  20%
+#> 
+#> Completed fitting Bootstrap samples. Now formatting results, and generating figure.
+#>   |                                                                              |=====================                                                 |  30%
+#> 
+#> Completed fitting Bootstrap samples. Now formatting results, and generating figure.
+#>   |                                                                              |============================                                          |  40%
+#> 
+#> Completed fitting Bootstrap samples. Now formatting results, and generating figure.
+#>   |                                                                              |===================================                                   |  50%
+#> 
+#> Completed fitting Bootstrap samples. Now formatting results, and generating figure.
+#>   |                                                                              |==========================================                            |  60%
+#> 
+#> Completed fitting Bootstrap samples. Now formatting results, and generating figure.
+#>   |                                                                              |=================================================                     |  70%
+#> 
+#> Completed fitting Bootstrap samples. Now formatting results, and generating figure.
+#>   |                                                                              |========================================================              |  80%
+#> 
+#> Completed fitting Bootstrap samples. Now formatting results, and generating figure.
+#>   |                                                                              |===============================================================       |  90%
+#> 
+#> Completed fitting Bootstrap samples. Now formatting results, and generating figure.
+#>   |                                                                              |======================================================================| 100%
+#> 
+#> Completed fitting Bootstrap samples. Now formatting results, and generating figure.
 ```
 
 <img src="man/figures/README-unnamed-chunk-9-1.png" width="100%" />
