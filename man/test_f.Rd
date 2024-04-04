@@ -13,7 +13,7 @@ test_f(
   plsmm_output,
   n_boot = 1000,
   predicted = FALSE,
-  verbose = FALSE
+  verbose = TRUE
 )
 }
 \arguments{
@@ -33,7 +33,7 @@ test_f(
 
 \item{predicted}{Logical indicating whether to plot predicted values. If \code{FALSE} only the observed time points are used.}
 
-\item{verbose}{Logical indicating whether to display bootstrap progress. Default is \code{FALSE}.}
+\item{verbose}{Logical indicating whether to display bootstrap progress. Default is \code{TRUE}.}
 }
 \value{
 A plot showing the estimated difference and confidence bands of the nonlinear functions.
