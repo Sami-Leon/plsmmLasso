@@ -12,7 +12,8 @@ test_f(
   name_group_var,
   plsmm_output,
   n_boot = 1000,
-  predicted = FALSE
+  predicted = FALSE,
+  verbose = FALSE
 )
 }
 \arguments{
@@ -31,6 +32,8 @@ test_f(
 \item{n_boot}{Numeric specifying the number of bootstrap samples (default is 1000).}
 
 \item{predicted}{Logical indicating whether to plot predicted values. If \code{FALSE} only the observed time points are used.}
+
+\item{verbose}{Logical indicating whether to display bootstrap progress. Default is \code{FALSE}.}
 }
 \value{
 A plot showing the estimated difference and confidence bands of the nonlinear functions.
