@@ -192,6 +192,7 @@ L2_test_f <- function(list_fitted_boot, plsmm_output) {
 #' @param plsmm_output Output object obtained from the \code{\link{plsmm_lasso}} function.
 #' @param n_boot Numeric specifying the number of bootstrap samples (default is 1000).
 #' @param predicted Logical indicating whether to plot predicted values. If \code{FALSE} only the observed time points are used.
+#' @param verbose Logical indicating whether to display bootstrap progress. Default is \code{FALSE}.
 #'
 #' @return 
 #' A plot showing the estimated difference and confidence bands of the nonlinear functions.
@@ -238,7 +239,7 @@ L2_test_f <- function(list_fitted_boot, plsmm_output) {
 #' @importFrom rlang .data
 #' @export
 test_f <- function(x, y, series, t, name_group_var, plsmm_output, n_boot = 1000,
-                   predicted = FALSE) {
+                   predicted = FALSE, verbose = FALSE) {
 
   f0 <- plsmm_output$lasso_output$out_f[plsmm_output$lasso_output$out_f$group == 0, ]
   f0 <- f0[!duplicated(f0$t), ]
@@ -270,10 +271,13 @@ test_f <- function(x, y, series, t, name_group_var, plsmm_output, n_boot = 1000,
   for (k in 1:n_boot) {
     fitted_boot[[k]] <- fit_boot(data = samples[[k]], min_lambda = min_lambda)
 
-    utils::setTxtProgressBar(pb, k)
+    if(verbose) {
+      utils::setTxtProgressBar(pb, k)
+      cat("\nCompleted fitting Bootstrap samples. Now formatting results, and generating figure.\n")
+    }
+
   }
 
-  cat("\nCompleted fitting Bootstrap samples. Now formatting results, and generating figure.\n")
 
   overall_test_results <- L2_test_f(
     list_fitted_boot = fitted_boot,
