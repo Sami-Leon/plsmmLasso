@@ -38,13 +38,13 @@
 #' series = sim$series
 #' t = sim$t
 #' bases = create_bases(t)
-# lambdas <- c(0.0046, 0.0001)
-# gammas <- 0.00000001
-# tuned_plsmm <- tune_plsmm(x, y, series, t,
-#                        name_group_var = "group", bases$bases,
-#                        gamma_vec = gammas, lambda_vec = lambdas, timexgroup = TRUE,
-#                        criterion = "BIC"
-# )
+#' lambdas <- c(0.0046, 0.0001)
+#' gammas <- 0.00000001
+#' tuned_plsmm <- tune_plsmm(x, y, series, t,
+#'                       name_group_var = "group", bases$bases,
+#'                       gamma_vec = gammas, lambda_vec = lambdas, timexgroup = TRUE,
+#'                       criterion = "BIC"
+#' )
 #'
 #' @export
 tune_plsmm <- function(x, y, series, t, name_group_var, bases,
