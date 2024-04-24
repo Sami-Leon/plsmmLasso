@@ -273,11 +273,13 @@ test_f <- function(x, y, series, t, name_group_var, plsmm_output, n_boot = 1000,
 
     if(verbose) {
       utils::setTxtProgressBar(pb, k)
-      message("\nCompleted fitting Bootstrap samples. Now formatting results, and generating figure.\n")
     }
 
   }
 
+  if(verbose) {
+    message("\nCompleted fitting Bootstrap samples. Now formatting results, and generating figure.\n")
+  }
 
   overall_test_results <- L2_test_f(
     list_fitted_boot = fitted_boot,
