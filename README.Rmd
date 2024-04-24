@@ -139,7 +139,7 @@ Finally, we can perform tests on the nonlinear functions. The first element of t
 ```{r}
 test_f_results <- test_f(x, y, series, t,
  name_group_var = "group", tuned_plsmm,
- n_boot = 10
+ n_boot = 10, verbose = TRUE
 )
 test_f_results[[1]]
 head(test_f_results[[2]])

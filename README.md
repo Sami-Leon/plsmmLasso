@@ -183,36 +183,9 @@ be found in the second element of the output list.
 ``` r
 test_f_results <- test_f(x, y, series, t,
  name_group_var = "group", tuned_plsmm,
- n_boot = 10
+ n_boot = 10, verbose = TRUE
 )
-#>   |                                                                              |                                                                      |   0%  |                                                                              |=======                                                               |  10%
-#> 
-#> Completed fitting Bootstrap samples. Now formatting results, and generating figure.
-#>   |                                                                              |==============                                                        |  20%
-#> 
-#> Completed fitting Bootstrap samples. Now formatting results, and generating figure.
-#>   |                                                                              |=====================                                                 |  30%
-#> 
-#> Completed fitting Bootstrap samples. Now formatting results, and generating figure.
-#>   |                                                                              |============================                                          |  40%
-#> 
-#> Completed fitting Bootstrap samples. Now formatting results, and generating figure.
-#>   |                                                                              |===================================                                   |  50%
-#> 
-#> Completed fitting Bootstrap samples. Now formatting results, and generating figure.
-#>   |                                                                              |==========================================                            |  60%
-#> 
-#> Completed fitting Bootstrap samples. Now formatting results, and generating figure.
-#>   |                                                                              |=================================================                     |  70%
-#> 
-#> Completed fitting Bootstrap samples. Now formatting results, and generating figure.
-#>   |                                                                              |========================================================              |  80%
-#> 
-#> Completed fitting Bootstrap samples. Now formatting results, and generating figure.
-#>   |                                                                              |===============================================================       |  90%
-#> 
-#> Completed fitting Bootstrap samples. Now formatting results, and generating figure.
-#>   |                                                                              |======================================================================| 100%
+#>   |                                                                              |                                                                      |   0%  |                                                                              |=======                                                               |  10%  |                                                                              |==============                                                        |  20%  |                                                                              |=====================                                                 |  30%  |                                                                              |============================                                          |  40%  |                                                                              |===================================                                   |  50%  |                                                                              |==========================================                            |  60%  |                                                                              |=================================================                     |  70%  |                                                                              |========================================================              |  80%  |                                                                              |===============================================================       |  90%  |                                                                              |======================================================================| 100%
 #> 
 #> Completed fitting Bootstrap samples. Now formatting results, and generating figure.
 ```
@@ -242,34 +215,7 @@ test_f_results <- test_f(x, y, series, t,
  name_group_var = "group", tuned_plsmm,
  n_boot = 10, predicted = TRUE
 )
-#>   |                                                                              |                                                                      |   0%  |                                                                              |=======                                                               |  10%
-#> 
-#> Completed fitting Bootstrap samples. Now formatting results, and generating figure.
-#>   |                                                                              |==============                                                        |  20%
-#> 
-#> Completed fitting Bootstrap samples. Now formatting results, and generating figure.
-#>   |                                                                              |=====================                                                 |  30%
-#> 
-#> Completed fitting Bootstrap samples. Now formatting results, and generating figure.
-#>   |                                                                              |============================                                          |  40%
-#> 
-#> Completed fitting Bootstrap samples. Now formatting results, and generating figure.
-#>   |                                                                              |===================================                                   |  50%
-#> 
-#> Completed fitting Bootstrap samples. Now formatting results, and generating figure.
-#>   |                                                                              |==========================================                            |  60%
-#> 
-#> Completed fitting Bootstrap samples. Now formatting results, and generating figure.
-#>   |                                                                              |=================================================                     |  70%
-#> 
-#> Completed fitting Bootstrap samples. Now formatting results, and generating figure.
-#>   |                                                                              |========================================================              |  80%
-#> 
-#> Completed fitting Bootstrap samples. Now formatting results, and generating figure.
-#>   |                                                                              |===============================================================       |  90%
-#> 
-#> Completed fitting Bootstrap samples. Now formatting results, and generating figure.
-#>   |                                                                              |======================================================================| 100%
+#>   |                                                                              |                                                                      |   0%  |                                                                              |=======                                                               |  10%  |                                                                              |==============                                                        |  20%  |                                                                              |=====================                                                 |  30%  |                                                                              |============================                                          |  40%  |                                                                              |===================================                                   |  50%  |                                                                              |==========================================                            |  60%  |                                                                              |=================================================                     |  70%  |                                                                              |========================================================              |  80%  |                                                                              |===============================================================       |  90%  |                                                                              |======================================================================| 100%
 #> 
 #> Completed fitting Bootstrap samples. Now formatting results, and generating figure.
 ```
