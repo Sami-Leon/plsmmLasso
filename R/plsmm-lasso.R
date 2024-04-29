@@ -160,10 +160,10 @@ joint_lasso <- function(x, y, t, name_group_var, bases, se, gamma,
 #' @param x A matrix of predictor variables.
 #' @param y A continuous vector of response variable.
 #' @param series A variable representing different series or groups in the data modeled as a random intercept.
-#' @param t A numeric vector indicating the time points.
+#' @param t A numeric vector indicating the timepoints.
 #' @param name_group_var A character string specifying the name of the grouping variable in the \code{x} matrix.
 #' @param bases A matrix of bases functions.
-#' @param gamma The regularization parameter for the nonlinear effect of time
+#' @param gamma The regularization parameter for the nonlinear effect of time.
 #' @param lambda The regularization parameter for the fixed effects.
 #' @param timexgroup Logical indicating whether to use a time-by-group interaction.
 #'                   If \code{TRUE}, each group in \code{name_group_var} will have its own estimate of the time effect.
