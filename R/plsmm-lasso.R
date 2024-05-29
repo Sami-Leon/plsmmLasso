@@ -168,6 +168,7 @@ joint_lasso <- function(x, y, t, name_group_var, bases, se, gamma,
 #' @param timexgroup Logical indicating whether to use a time-by-group interaction.
 #'                   If \code{TRUE}, each group in \code{name_group_var} will have its own estimate of the time effect.
 #' @param criterion The information criterion to be computed. Options are "BIC", "BICC", or "EBIC".
+#' @param nonpara Logical. If TRUE, the \code{criterion} is computed using both the coefficients of the fixed-effects and the coefficients of the nonlinear function. If FALSE, only the coefficients of the fixed-effects are used.
 #' @param cvg_tol Convergence tolerance for the algorithm.
 #' @param max_iter Maximum number of iterations allowed for convergence.
 #' @param verbose Logical indicating whether to print convergence details at each iteration. Default is \code{FALSE}.
@@ -238,8 +239,8 @@ joint_lasso <- function(x, y, t, name_group_var, bases, se, gamma,
 #' plsmm_output$out_phi
 #' @export
 plsmm_lasso <- function(x, y, series, t, name_group_var = NULL, bases,
-                       gamma, lambda, timexgroup, criterion, cvg_tol = 0.001,
-                       max_iter = 100, verbose = FALSE) {
+                       gamma, lambda, timexgroup, criterion, nonpara = FALSE,
+                       cvg_tol = 0.001, max_iter = 100, verbose = FALSE) {
   # Check if x is a matrix
   if (!is.matrix(x)) {
     stop("Argument 'x' must be a matrix.")
@@ -439,7 +440,7 @@ plsmm_lasso <- function(x, y, series, t, name_group_var = NULL, bases,
 
   ic <- calc_criterion(
     crit = criterion, lasso_output = lasso_output,
-    log_lik = logLik, nonpara = FALSE
+    log_lik = logLik, nonpara = nonpara
   )
 
   return(list(
