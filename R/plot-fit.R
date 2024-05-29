@@ -10,6 +10,7 @@
 #' @param name_group_var A character string specifying the name of the grouping variable.
 #' @param plsmm_output Output object obtained from the \code{\link{plsmm_lasso}} function.
 #' @param predicted Logical indicating whether to plot predicted values. If \code{FALSE} only the observed time points are used.
+#' @param show_obs Logical. If \code{TRUE} the observed time points are used for the position scale of the x-axis.
 #'
 #' @return Two plots:
 #'   - The first plot shows the observed data and the estimated mean trajectories.
@@ -45,7 +46,7 @@
 #' @importFrom rlang .data
 #' @export
 plot_fit <- function(x, y, series, t, name_group_var,
-                     plsmm_output, predicted = FALSE) {
+                     plsmm_output, predicted = FALSE, show_obs = FALSE) {
   data <- data.frame(y, series, t, x)
 
   data$f_fit <- plsmm_output$lasso_output$out_f$f_fit
@@ -107,15 +108,13 @@ plot_fit <- function(x, y, series, t, name_group_var,
       ) + ggplot2::geom_point(ggplot2::aes(x = t, y = .data$mean_trajectories),
         data = obs_f, size = 2,
         col = "red"
-      ) +
-      ggplot2::scale_x_continuous(breaks = t_obs)
+      ) 
 
     p.F <- ggplot2::ggplot(ggplot2::aes(x = t, y = .data$f_cont), data = predicted_f) +
       ggplot2::geom_line(size = 1, col = "red") +
       ggplot2::geom_point(ggplot2::aes(x = t, y = .data$f_cont),
         data = obs_f, size = 2, col = "red"
-      ) +
-      ggplot2::scale_x_continuous(breaks = t_obs)
+      ) 
     
     if(!is.null(name_group_var)) {
       p.F.overall = p.F.overall + ggplot2::facet_grid(. ~ group)
@@ -130,13 +129,11 @@ plot_fit <- function(x, y, series, t, name_group_var,
       ) +
       ggplot2::geom_point(ggplot2::aes(x = t, y = .data$mean_trajectories),
         data = obs_f, size = 2, col = "red"
-      ) +
-      ggplot2::scale_x_continuous(breaks = t_obs)
+      ) 
 
     p.F <- ggplot2::ggplot(ggplot2::aes(x = t, y = .data$f_cont), data = obs_f) +
       ggplot2::geom_line(size = 1, col = "red") +
-      ggplot2::geom_point(size = 2, col = "red") +
-      ggplot2::scale_x_continuous(breaks = t_obs)
+      ggplot2::geom_point(size = 2, col = "red")
     
     if(!is.null(name_group_var)) {
       p.F.overall = p.F.overall + ggplot2::facet_grid(. ~ group)
@@ -144,6 +141,12 @@ plot_fit <- function(x, y, series, t, name_group_var,
     }
   }
 
+  if(show_obs) {
+    p.F.overall = p.F.overall +
+      ggplot2::scale_x_continuous(breaks = t_obs)
+    p.F = p.F +
+      ggplot2::scale_x_continuous(breaks = t_obs)
+  }
   print(p.F.overall)
   print(p.F)
 }
