@@ -29,8 +29,8 @@ create_bases <- function(t, keep = NULL) {
   max_t <- max(t)
   n_timepoints <- length(t)
   
-  Fourier_basis <- matrix(NA, n_timepoints, 2 * max_t)
-  for (i in 1:max_t) {
+  Fourier_basis <- matrix(NA, n_timepoints, 2 * round(max_t))
+  for (i in 1:round(max_t)) {
     angle <- 2 * pi * i * t / max_t
     Fourier_basis[, (2 * i - 1):(2 * i)] <- cbind(sin(angle), cos(angle))
   }
