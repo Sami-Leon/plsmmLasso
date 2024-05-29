@@ -1,6 +1,6 @@
 f <- function(t, A, omega, cos = FALSE) {
   if (cos) {
-    return(as.vector(-A * sin(2 * pi * t / omega)))
+    return(as.vector(-A * cos(2 * pi * t / omega)))
   }
   as.vector(A * sin(2 * pi * t / omega))
 }
