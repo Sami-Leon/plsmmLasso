@@ -54,12 +54,26 @@ fit_boot <- function(data, min_lambda) {
 
   out_f <- data[, c("t", "f_fit", "group")]
 
-  out_f[out_f$Group == 0, ]$f_fit <- out_f[out_f$Group == 0, ]$f_fit - attr(scale(unique(out_f[out_f$Group == 0, ]$f_fit),
+  out_f[out_f$group == 0, ]$f_fit <- out_f[out_f$group == 0, ]$f_fit - attr(scale(unique(out_f[out_f$group == 0, ]$f_fit),
     scale = FALSE
   ), "scaled:center")
-  out_f[out_f$Group == 1, ]$f_fit <- out_f[out_f$Group == 1, ]$f_fit - attr(scale(unique(out_f[out_f$Group == 1, ]$f_fit),
+  out_f[out_f$group == 1, ]$f_fit <- out_f[out_f$group == 1, ]$f_fit - attr(scale(unique(out_f[out_f$group == 1, ]$f_fit),
     scale = FALSE
   ), "scaled:center")
+  
+  t0 = sort(unique(out_f[out_f$group == 0, ]$t))
+  t1 = sort(unique(out_f[out_f$group == 1, ]$t))
+
+  if (length(t0) != length(t1)) {
+    combined_t <- sort(unique(out_f$t))
+    out_f <- pred_f(model = list(out_f = out_f, alpha = as.vector(final_fit$beta[, 1])),
+                    data = data, t_seq = combined_t)
+  } else if (!all(t0 == t1)) {
+    combined_t <- sort(unique(out_f$t))
+    out_f <- pred_f(model = list(out_f = out_f, alpha = as.vector(final_fit$beta[, 1])),
+                    data = data, t_seq = combined_t)
+  }
+  
   return(list(out_f = out_f, alpha = as.vector(final_fit$beta[, 1])))
 }
 
@@ -79,7 +93,7 @@ calc_f_diff <- function(out_f) {
 f_predict = function(t, coef, group, keep = NULL) {
   
   bases = create_bases(t, keep = keep)$bases
-  
+  # browser()
   if(length(coef) == ncol(bases) | is.null(group)) {
     return(bases %*% coef)
   } else {
@@ -94,16 +108,16 @@ f_predict = function(t, coef, group, keep = NULL) {
   
 }
 
-pred_f <- function(model, data, byseq = 0.1) {
+pred_f <- function(model, data, t_seq) {
   selected_bases <- create_bases(data$t)$selected_bases
 
-  t_cont <- seq(min(data$t), max(data$t), by = byseq)
+  # t_cont <- seq(min(data$t), max(data$t), by = byseq)
   t_obs <- sort(unique(data$t))
 
   df.F <- data.frame(
-    c(t_cont, t_cont),
+    c(t_seq, t_seq),
     c(f_predict(
-      t = t_cont,
+      t = t_seq,
       coef = model$alpha, group = model$out_f$group[1],
       keep = selected_bases
     ) - mean(f_predict(
@@ -111,7 +125,7 @@ pred_f <- function(model, data, byseq = 0.1) {
       coef = model$alpha, group = model$out_f$group[1],
       keep = selected_bases
     )), f_predict(
-      t = t_cont,
+      t = t_seq,
       coef = model$alpha, group = 1 - model$out_f$group[1],
       keep = selected_bases
     ) - mean(f_predict(
@@ -119,7 +133,7 @@ pred_f <- function(model, data, byseq = 0.1) {
       coef = model$alpha, group = 1 - model$out_f$group[1],
       keep = selected_bases
     ))),
-    c(rep(0, length(t_cont)), rep(1, length(t_cont)))
+    c(rep(0, length(t_seq)), rep(1, length(t_seq)))
   )
 
   colnames(df.F) <- c("t", "f_fit", "group")
@@ -144,8 +158,10 @@ create_CI <- function(list_diff_CI, data, min_lambda) {
   CI_low <- data.frame(t = list_diff_CI[[1]]$t, low = d_bar - q_b * s_bar)
   CI_up <- data.frame(t = list_diff_CI[[1]]$t, up = d_bar + q_b * s_bar)
 
-  obs <- calc_f_diff(pred_f(fit_boot(data, min_lambda), data, byseq = 0.1))
+  obs <- calc_f_diff(pred_f(fit_boot(data, min_lambda), data, 
+                            t_seq = seq(min(data$t), max(data$t), by = 0.1)))
 
+  
   CI_diff_f <- data.frame(obs, CI_low[, 2], CI_up[, 2])
   colnames(CI_diff_f) <- c("t", "f diff.", "Lower 95%", "Upper 95%")
   rownames(CI_diff_f) <- NULL
@@ -192,6 +208,7 @@ L2_test_f <- function(list_fitted_boot, plsmm_output) {
 #' @param plsmm_output Output object obtained from the \code{\link{plsmm_lasso}} function.
 #' @param n_boot Numeric specifying the number of bootstrap samples (default is 1000).
 #' @param predicted Logical indicating whether to plot predicted values. If \code{FALSE} only the observed time points are used.
+#' @param show_obs Logical. If \code{TRUE} the observed time points are used for the position scale of the x-axis.
 #' @param verbose Logical indicating whether to display bootstrap progress. Default is \code{TRUE}.
 #'
 #' @return 
@@ -239,7 +256,7 @@ L2_test_f <- function(list_fitted_boot, plsmm_output) {
 #' @importFrom rlang .data
 #' @export
 test_f <- function(x, y, series, t, name_group_var, plsmm_output, n_boot = 1000,
-                   predicted = FALSE, verbose = TRUE) {
+                   predicted = FALSE, show_obs = FALSE, verbose = TRUE) {
 
   f0 <- plsmm_output$lasso_output$out_f[plsmm_output$lasso_output$out_f$group == 0, ]
   f0 <- f0[!duplicated(f0$t), ]
@@ -287,7 +304,8 @@ test_f <- function(x, y, series, t, name_group_var, plsmm_output, n_boot = 1000,
   )
 
   predicted_f <- lapply(1:length(fitted_boot), function(i) {
-    pred_f(model = fitted_boot[[i]], data = samples[[i]])
+    pred_f(model = fitted_boot[[i]], data = samples[[i]], 
+           t_seq = seq(min(samples[[i]]$t), max(samples[[i]]$t), by = 0.1))
   })
 
 
@@ -306,8 +324,7 @@ test_f <- function(x, y, series, t, name_group_var, plsmm_output, n_boot = 1000,
       ggplot2::geom_point(
         ggplot2::aes(x = t, y = .data$`f diff.`),
         CI_f[CI_f$t %in% t_obs, ]
-      ) +
-      ggplot2::scale_x_continuous(breaks = t_obs)
+      ) 
   } else {
     CI_obs_f <- CI_f[CI_f$t %in% t_obs, ]
 
@@ -319,9 +336,14 @@ test_f <- function(x, y, series, t, name_group_var, plsmm_output, n_boot = 1000,
         fill = "gray", alpha = 0.6
       ) +
       ggplot2::geom_line(linewidth = 0.7) +
-      ggplot2::geom_point() +
+      ggplot2::geom_point()
+  }
+  
+  if(show_obs) {
+    plot_CI = plot_CI +
       ggplot2::scale_x_continuous(breaks = t_obs)
   }
+  
   print(plot_CI)
   return(list(
     overall_test_results = overall_test_results, CI_f = CI_f
