@@ -13,6 +13,7 @@ test_f(
   plsmm_output,
   n_boot = 1000,
   predicted = FALSE,
+  show_obs = FALSE,
   verbose = TRUE
 )
 }
@@ -32,6 +33,8 @@ test_f(
 \item{n_boot}{Numeric specifying the number of bootstrap samples (default is 1000).}
 
 \item{predicted}{Logical indicating whether to plot predicted values. If \code{FALSE} only the observed time points are used.}
+
+\item{show_obs}{Logical. If \code{TRUE} the observed time points are used for the position scale of the x-axis.}
 
 \item{verbose}{Logical indicating whether to display bootstrap progress. Default is \code{TRUE}.}
 }

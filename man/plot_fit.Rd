@@ -4,7 +4,16 @@
 \alias{plot_fit}
 \title{Visualization of estimated mean trajectories and nonlinear functions from a PLSMM}
 \usage{
-plot_fit(x, y, series, t, name_group_var, plsmm_output, predicted = FALSE)
+plot_fit(
+  x,
+  y,
+  series,
+  t,
+  name_group_var,
+  plsmm_output,
+  predicted = FALSE,
+  show_obs = FALSE
+)
 }
 \arguments{
 \item{x}{A matrix of predictors.}
@@ -20,6 +29,8 @@ plot_fit(x, y, series, t, name_group_var, plsmm_output, predicted = FALSE)
 \item{plsmm_output}{Output object obtained from the \code{\link{plsmm_lasso}} function.}
 
 \item{predicted}{Logical indicating whether to plot predicted values. If \code{FALSE} only the observed time points are used.}
+
+\item{show_obs}{Logical. If \code{TRUE} the observed time points are used for the position scale of the x-axis.}
 }
 \value{
 Two plots:

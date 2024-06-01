@@ -15,6 +15,7 @@ plsmm_lasso(
   lambda,
   timexgroup,
   criterion,
+  nonpara = FALSE,
   cvg_tol = 0.001,
   max_iter = 100,
   verbose = FALSE
@@ -27,13 +28,13 @@ plsmm_lasso(
 
 \item{series}{A variable representing different series or groups in the data modeled as a random intercept.}
 
-\item{t}{A numeric vector indicating the time points.}
+\item{t}{A numeric vector indicating the timepoints.}
 
 \item{name_group_var}{A character string specifying the name of the grouping variable in the \code{x} matrix.}
 
 \item{bases}{A matrix of bases functions.}
 
-\item{gamma}{The regularization parameter for the nonlinear effect of time}
+\item{gamma}{The regularization parameter for the nonlinear effect of time.}
 
 \item{lambda}{The regularization parameter for the fixed effects.}
 
@@ -41,6 +42,8 @@ plsmm_lasso(
 If \code{TRUE}, each group in \code{name_group_var} will have its own estimate of the time effect.}
 
 \item{criterion}{The information criterion to be computed. Options are "BIC", "BICC", or "EBIC".}
+
+\item{nonpara}{Logical. If TRUE, the \code{criterion} is computed using both the coefficients of the fixed-effects and the coefficients of the nonlinear function. If FALSE, only the coefficients of the fixed-effects are used.}
 
 \item{cvg_tol}{Convergence tolerance for the algorithm.}
 
